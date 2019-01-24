@@ -161,6 +161,7 @@ struct uvc_device {
 	unsigned int control_intf;
 	struct usb_ep *control_ep;
 	struct usb_request *control_req;
+	struct usb_ctrlrequest control_setup;
 	void *control_buf;
 
 	unsigned int streaming_intf;
