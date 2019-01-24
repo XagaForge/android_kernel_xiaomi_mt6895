@@ -454,6 +454,25 @@ stall:
 	return handled;
 }
 
+static int ep0_send_ack(struct musb *musb)
+{
+	void __iomem *regs = musb->control_ep->regs;
+	u16 csr;
+
+	if (musb->ep0_state != MUSB_EP0_STAGE_RX &&
+	    musb->ep0_state != MUSB_EP0_STAGE_STATUSIN)
+		return -EINVAL;
+
+	csr = MUSB_CSR0_P_DATAEND | MUSB_CSR0_P_SVDRXPKTRDY;
+
+	musb_ep_select(musb->mregs, 0);
+	musb_writew(regs, MUSB_CSR0, csr);
+
+	musb->ep0_state = MUSB_EP0_STAGE_STATUSIN;
+
+	return 0;
+}
+
 /* we have an ep0out data packet
  * Context:  caller holds controller lock
  */
@@ -500,12 +519,15 @@ static void ep0_rxstate(struct musb *musb)
 	if (req) {
 		musb->ackpend = csr;
 		musb_g_ep0_giveback(musb, req);
+		if (req->explicit_status)
+			return;
 		if (!musb->ackpend)
 			return;
 		musb->ackpend = 0;
+	} else {
+		musb_ep_select(musb->mregs, 0);
+		musb_writew(regs, MUSB_CSR0, csr);
 	}
-	musb_ep_select(musb->mregs, 0);
-	musb_writew(regs, MUSB_CSR0, csr);
 }
 
 /*
@@ -933,6 +955,7 @@ musb_g_ep0_queue(struct usb_ep *e, struct usb_request *r, gfp_t gfp_flags)
 	case MUSB_EP0_STAGE_RX:		/* control-OUT data */
 	case MUSB_EP0_STAGE_TX:		/* control-IN data */
 	case MUSB_EP0_STAGE_ACKWAIT:	/* zero-length data */
+	case MUSB_EP0_STAGE_STATUSIN:
 		status = 0;
 		break;
 	default:
@@ -974,6 +997,15 @@ musb_g_ep0_queue(struct usb_ep *e, struct usb_request *r, gfp_t gfp_flags)
 	} else if (musb->ackpend) {
 		musb_writew(regs, MUSB_CSR0, musb->ackpend);
 		musb->ackpend = 0;
+
+	/* status stage of OUT with data, issue IN status, then giveback */
+	} else if (musb->ep0_state == MUSB_EP0_STAGE_STATUSIN) {
+		if (req->request.length)
+			status = -EINVAL;
+		else {
+			status = ep0_send_ack(musb);
+			musb_g_ep0_giveback(ep->musb, r);
+		}
 	}
 
 cleanup:
