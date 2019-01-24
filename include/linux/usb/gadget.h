@@ -79,6 +79,7 @@ struct usb_ep;
  *	Note that for writes (IN transfers) some data bytes may still
  *	reside in a device-side FIFO when the request is reported as
  *	complete.
+ * @explicit_status: If true, delays the status stage
  *
  * These are allocated/freed through the endpoint they're used with.  The
  * hardware's driver can add extra per-request data to the memory it returns,
@@ -124,7 +125,7 @@ struct usb_request {
 	int			status;
 	unsigned		actual;
 
-	ANDROID_KABI_RESERVE(1);
+	ANDROID_KABI_USE(1, bool explicit_status);
 };
 
 /*-------------------------------------------------------------------------*/
@@ -912,6 +913,13 @@ extern void usb_gadget_udc_reset(struct usb_gadget *gadget,
 
 extern void usb_gadget_giveback_request(struct usb_ep *ep,
 		struct usb_request *req);
+
+/*-------------------------------------------------------------------------*/
+
+/* utility to complete or delay status stage */
+
+void usb_gadget_control_complete(struct usb_gadget *gadget,
+		struct usb_request *request);
 
 /*-------------------------------------------------------------------------*/
 
