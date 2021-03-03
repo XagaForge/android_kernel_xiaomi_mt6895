@@ -128,6 +128,22 @@
  */
 #define KBASE_REG_ZONE_MAX 4ul
 
+/**
+ * Priority level for realtime worker threads
+ */
+#define KBASE_RT_THREAD_PRIO (60)
+
+/* TODO(b/181145264) get the following two numbers from device tree */
+/**
+ * First CPU in the contiguous CPU mask used for realtime worker threads.
+ */
+#define KBASE_RT_THREAD_CPUMASK_MIN (0)
+
+/**
+ * Last CPU in the contiguous CPU mask used for realtime worker threads.
+ */
+#define KBASE_RT_THREAD_CPUMASK_MAX (3)
+
 #include "mali_kbase_hwaccess_defs.h"
 
 /* Maximum number of pages of memory that require a permanent mapping, per
