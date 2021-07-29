@@ -1929,7 +1929,7 @@ void kbase_csf_ctx_handle_fault(struct kbase_context *kctx,
 	mutex_unlock(&kctx->csf.lock);
 
 	if (reported)
-		kbase_event_wakeup(kctx);
+		kbase_event_wakeup_sync(kctx);
 
 	kbase_reset_gpu_allow(kbdev);
 }
@@ -2133,7 +2133,7 @@ void kbase_csf_event_signal(struct kbase_context *kctx, bool notify_gpu)
 	/* First increment the signal count and wake up event thread.
 	 */
 	atomic_set(&kctx->event_count, 1);
-	kbase_event_wakeup(kctx);
+	kbase_event_wakeup_nosync(kctx);
 
 	/* Signal the CSF firmware. This is to ensure that pending command
 	 * stream synch object wait operations are re-evaluated.
@@ -2277,7 +2277,7 @@ static void report_tiler_oom_error(struct kbase_queue_group *group)
 					  } } } };
 
 	add_error(group->kctx, &group->error_tiler_oom, &error);
-	kbase_event_wakeup(group->kctx);
+	kbase_event_wakeup_sync(group->kctx);
 }
 
 /**
@@ -2424,7 +2424,7 @@ static void report_group_timeout_error(struct kbase_queue_group *const group)
 		 kbase_csf_timeout_get(group->kctx->kbdev));
 
 	add_error(group->kctx, &group->error_timeout, &error);
-	kbase_event_wakeup(group->kctx);
+	kbase_event_wakeup_sync(group->kctx);
 }
 
 /**
@@ -2515,7 +2515,7 @@ static void report_queue_fatal_error(struct kbase_queue *const queue,
 						  } } } } } };
 
 	add_error(queue->kctx, &queue->error, &error);
-	kbase_event_wakeup(queue->kctx);
+	kbase_event_wakeup_sync(queue->kctx);
 }
 
 /**
