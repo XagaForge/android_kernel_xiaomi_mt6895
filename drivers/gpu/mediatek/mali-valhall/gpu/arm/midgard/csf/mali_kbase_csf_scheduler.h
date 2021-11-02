@@ -468,7 +468,7 @@ kbase_csf_scheduler_advance_tick_nolock(struct kbase_device *kbdev)
 	if (scheduler->tick_timer_active) {
 		KBASE_KTRACE_ADD(kbdev, SCHEDULER_ADVANCE_TICK, NULL, 0u);
 		scheduler->tick_timer_active = false;
-		queue_work(scheduler->wq, &scheduler->tick_work);
+		kthread_queue_work(&scheduler->csf_worker, &scheduler->tick_work);
 	} else {
 		KBASE_KTRACE_ADD(kbdev, SCHEDULER_NOADVANCE_TICK, NULL, 0u);
 	}

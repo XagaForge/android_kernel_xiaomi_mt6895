@@ -806,7 +806,8 @@ struct kbase_csf_csg_slot {
  *                          periodic scheduling tasks. If this value is 0
  *                          then it will only perform scheduling under the
  *                          influence of external factors e.g., IRQs, IOCTLs.
- * @wq:                     Dedicated workqueue to execute the @tick_work.
+ * @csf_worker:             Dedicated kthread_worker to execute the @tick_work.
+ * @csf_worker_thread:      Task struct for @csf_worker.
  * @tick_timer:             High-resolution timer employed to schedule tick
  *                          workqueue items (kernel-provided delayed_work
  *                          items do not use hrtimer and for some reason do
@@ -900,10 +901,11 @@ struct kbase_csf_scheduler {
 	DECLARE_BITMAP(csg_slots_prio_update, MAX_SUPPORTED_CSGS);
 	unsigned long last_schedule;
 	bool timer_enabled;
-	struct workqueue_struct *wq;
+	struct kthread_worker csf_worker;
+	struct task_struct *csf_worker_thread;
 	struct hrtimer tick_timer;
-	struct work_struct tick_work;
-	struct delayed_work tock_work;
+	struct kthread_work tick_work;
+	struct kthread_delayed_work tock_work;
 	struct delayed_work ping_work;
 	struct kbase_context *top_ctx;
 	struct kbase_queue_group *top_grp;
