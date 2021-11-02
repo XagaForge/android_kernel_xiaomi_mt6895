@@ -2976,7 +2976,7 @@ static void process_csg_interrupts(struct kbase_device *const kbdev, int const c
 			/* If there are non-idle CSGs waiting for a slot, fire
 			 * a tock for a replacement.
 			 */
-			mod_delayed_work(scheduler->wq, &scheduler->tock_work, 0);
+			kthread_mod_delayed_work(&scheduler->csf_worker, &scheduler->tock_work, 0);
 		}
 
 		if (group->scan_seq_num < track->idle_seq) {
@@ -3191,7 +3191,7 @@ static inline void process_tracked_info_for_protm(struct kbase_device *kbdev,
 		 * for the scheduler to re-examine the case.
 		 */
 		dev_dbg(kbdev->dev, "Attempt pending protm from idle slot %d\n", track->idle_slot);
-		mod_delayed_work(scheduler->wq, &scheduler->tock_work, 0);
+		kthread_mod_delayed_work(&scheduler->csf_worker, &scheduler->tock_work, 0);
 	} else if (group) {
 		u32 i, num_groups = kbdev->csf.global_iface.group_num;
 		struct kbase_queue_group *grp;
@@ -3214,7 +3214,7 @@ static inline void process_tracked_info_for_protm(struct kbase_device *kbdev,
 				tock_triggered = true;
 				dev_dbg(kbdev->dev,
 					"Attempt new protm from tick/tock idle slot %d\n", i);
-				mod_delayed_work(scheduler->wq, &scheduler->tock_work, 0);
+				kthread_mod_delayed_work(&scheduler->csf_worker, &scheduler->tock_work, 0);
 				break;
 			}
 		}
