@@ -2965,9 +2965,9 @@ int kbase_context_mmap(struct kbase_context *const kctx,
 	case PFN_DOWN(BASEP_MEM_CSF_USER_IO_PAGES_HANDLE) ...
 	     PFN_DOWN(BASE_MEM_COOKIE_BASE) - 1: {
 		kbase_gpu_vm_unlock(kctx);
-		mutex_lock(&kctx->csf.lock);
+		rt_mutex_lock(&kctx->csf.lock);
 		err = kbase_csf_cpu_mmap_user_io_pages(kctx, vma);
-		mutex_unlock(&kctx->csf.lock);
+		rt_mutex_unlock(&kctx->csf.lock);
 		goto out;
 	}
 #endif
@@ -3429,9 +3429,9 @@ static void kbase_csf_user_io_pages_vm_close(struct vm_area_struct *vma)
 	else
 		reset_prevented = true;
 
-	mutex_lock(&kctx->csf.lock);
+	rt_mutex_lock(&kctx->csf.lock);
 	kbase_csf_queue_unbind(queue, is_process_exiting(vma));
-	mutex_unlock(&kctx->csf.lock);
+	rt_mutex_unlock(&kctx->csf.lock);
 
 	if (reset_prevented)
 		kbase_reset_gpu_allow(kbdev);

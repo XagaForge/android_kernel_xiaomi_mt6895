@@ -51,25 +51,25 @@ static int kbasep_csf_cpu_queue_debugfs_show(struct seq_file *file, void *data)
 {
 	struct kbase_context *kctx = file->private;
 
-	mutex_lock(&kctx->csf.lock);
+	rt_mutex_lock(&kctx->csf.lock);
 	if (atomic_read(&kctx->csf.cpu_queue.dump_req_status) !=
 				BASE_CSF_CPU_QUEUE_DUMP_COMPLETE) {
 		seq_printf(file, "Dump request already started! (try again)\n");
-		mutex_unlock(&kctx->csf.lock);
+		rt_mutex_unlock(&kctx->csf.lock);
 		return -EBUSY;
 	}
 
 	atomic_set(&kctx->csf.cpu_queue.dump_req_status, BASE_CSF_CPU_QUEUE_DUMP_ISSUED);
 	init_completion(&kctx->csf.cpu_queue.dump_cmp);
 	kbase_event_wakeup_nosync(kctx);
-	mutex_unlock(&kctx->csf.lock);
+	rt_mutex_unlock(&kctx->csf.lock);
 
 	seq_printf(file, "CPU Queues table (version:v%u):\n", MALI_CSF_CPU_QUEUE_DEBUGFS_VERSION);
 
 	wait_for_completion_timeout(&kctx->csf.cpu_queue.dump_cmp,
 			msecs_to_jiffies(3000));
 
-	mutex_lock(&kctx->csf.lock);
+	rt_mutex_lock(&kctx->csf.lock);
 	if (kctx->csf.cpu_queue.buffer) {
 		WARN_ON(atomic_read(&kctx->csf.cpu_queue.dump_req_status) !=
 				    BASE_CSF_CPU_QUEUE_DUMP_PENDING);
@@ -86,7 +86,7 @@ static int kbasep_csf_cpu_queue_debugfs_show(struct seq_file *file, void *data)
 	atomic_set(&kctx->csf.cpu_queue.dump_req_status,
 			BASE_CSF_CPU_QUEUE_DUMP_COMPLETE);
 
-	mutex_unlock(&kctx->csf.lock);
+	rt_mutex_unlock(&kctx->csf.lock);
 	return 0;
 }
 
@@ -152,7 +152,7 @@ int kbase_csf_cpu_queue_dump(struct kbase_context *kctx,
 		goto done;
 	}
 
-	mutex_lock(&kctx->csf.lock);
+	rt_mutex_lock(&kctx->csf.lock);
 
 	kfree(kctx->csf.cpu_queue.buffer);
 
@@ -165,7 +165,7 @@ int kbase_csf_cpu_queue_dump(struct kbase_context *kctx,
 		kfree(dump_buffer);
 	}
 
-	mutex_unlock(&kctx->csf.lock);
+	rt_mutex_unlock(&kctx->csf.lock);
 done:
 	return err;
 }
