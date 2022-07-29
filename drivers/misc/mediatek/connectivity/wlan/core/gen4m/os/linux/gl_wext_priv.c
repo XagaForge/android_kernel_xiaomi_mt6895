@@ -15904,7 +15904,7 @@ int android_private_support_driver_cmd(IN struct net_device *prNetDev,
 		return -ENOMEM;
 	}
 
-	if (copy_from_user(command, priv_cmd.buf, priv_cmd.total_len)) {
+	if (kalMemCopy(command, priv_cmd.buf, priv_cmd.total_len)) {
 		ret = -EFAULT;
 		goto FREE;
 	}
@@ -15929,7 +15929,7 @@ int android_private_support_driver_cmd(IN struct net_device *prNetDev,
 
 		priv_cmd.used_len = bytes_written;
 
-		if (copy_to_user(priv_cmd.buf, command, bytes_written))
+		if (kalMemCopy(priv_cmd.buf, command, bytes_written))
 			ret = -EFAULT;
 	} else
 		ret = bytes_written;
