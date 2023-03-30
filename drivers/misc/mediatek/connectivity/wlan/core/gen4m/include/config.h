@@ -139,8 +139,6 @@
 #define CFG_SUPPORT_PERFORMANCE_TEST    0 /*Only for performance Test */
 
 #define CFG_COUNTRY_CODE                NULL /* "US" */
-#define CFG_SUPPORT_DEBUG_FS		0
-#define CFG_SUPPORT_SET_CAM_BY_PROC	1 /*Enable/disable powersave mode*/
 
 #ifndef LINUX
 #define CFG_FW_FILENAME                 L"WIFI_RAM_CODE"
