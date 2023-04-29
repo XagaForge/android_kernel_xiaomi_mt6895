@@ -4909,8 +4909,9 @@ int kbase_map_external_resource(struct kbase_context *kctx, struct kbase_va_regi
 		break;
 	}
 	default:
-		WARN(1, "Invalid external resource GPU allocation type (%x) on mapping",
-		     alloc->type);
+		dev_dbg(kctx->kbdev->dev,
+			"Invalid external resource GPU allocation type (%x) on mapping",
+			alloc->type);
 		return -EINVAL;
 	}
 
