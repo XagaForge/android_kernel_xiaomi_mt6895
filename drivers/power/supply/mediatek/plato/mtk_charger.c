@@ -2215,14 +2215,6 @@ stop_charging:
 		info->stop_6pin_re_en = false;
 	}
 
-	chr_err("tmp:%d (jeita:%d sm:%d cv:%d en:%d) (sm:%d) en:%d c:%d s:%d ov:%d sc:%d %d %d saf_cmd:%d bat_mon:%d %d\n",
-		temperature, info->enable_sw_jeita, info->sw_jeita.sm,
-		info->sw_jeita.cv, info->sw_jeita.charging, thermal->sm,
-		charging, info->cmd_discharging, info->safety_timeout,
-		info->vbusov_stat, info->sc.disable_charger,
-		info->can_charging, charging, info->safety_timer_cmd,
-		info->enable_vbat_mon, info->batpro_done);
-
 	charger_dev_is_enabled(info->chg1_dev, &chg_dev_chgen);
 
 	if (charging != info->can_charging)
