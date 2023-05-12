@@ -669,10 +669,6 @@ int mtk_pe40_get_init_watt(struct chg_alg_device *alg)
 		return -1;
 	}
 
-	for (i = 0; i < 3 ; i++) {
-		pe4_hal_dump_registers(alg);
-		msleep(100);
-	}
 
 	mtk_pe40_get_ibus(alg, &ibus1);
 	vbus1 = pe4_hal_get_vbus(alg);
@@ -826,8 +822,6 @@ int mtk_pe40_init_state(struct chg_alg_device *alg)
 			}
 		}
 	}
-	pe4_hal_dump_registers(alg);
-	msleep(100);
 
 	if (cap.output_ma > 100) {
 		pe4_err("[pe40_i0] FOD fail :%d\n", cap.output_ma);

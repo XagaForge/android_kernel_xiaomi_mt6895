@@ -732,10 +732,6 @@ int adc_battemp(struct mtk_battery *gm, int res)
 		tbatt_value = (((res - res2) * tmp1) +
 			((res1 - res) * tmp2)) / (res1 - res2);
 	}
-	bm_debug("[%s] %d %d %d %d %d %d\n",
-		__func__,
-		res1, res2, res, tmp1,
-		tmp2, tbatt_value);
 
 	return tbatt_value;
 }
@@ -2842,20 +2838,6 @@ static void fg_drv_update_hw_status(struct mtk_battery *gm)
 	ktime_t ktime;
 
 	gm->tbat = force_get_tbat_internal(gm, true);
-
-	bm_err("car[%d,%ld,%ld,%ld,%ld] tmp:%d soc:%d uisoc:%d vbat:%d ibat:%d baton:%d algo:%d gm3:%d %d %d %d %d,boot:%d\n",
-		gauge_get_int_property(GAUGE_PROP_COULOMB),
-		gm->coulomb_plus.end, gm->coulomb_minus.end,
-		gm->uisoc_plus.end, gm->uisoc_minus.end,
-		gm->tbat,
-		gm->soc, gm->ui_soc,
-		gm->vbat,
-		gm->ibat,
-		gm->baton,
-		gm->algo.active,
-		gm->disableGM30, gm->fg_cust_data.disable_nafg,
-		gm->ntc_disable_nafg, gm->cmd_disable_nafg, gm->vbat0_flag,
-		gm->bootmode);
 
 	fg_drv_update_daemon(gm);
 
