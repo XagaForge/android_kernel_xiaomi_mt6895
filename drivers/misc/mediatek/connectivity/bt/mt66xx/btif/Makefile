@@ -28,14 +28,8 @@ ifeq ($(CONFIG_WLAN_DRV_BUILD_IN),y)
 endif
 
 
-$(info $(LOG_TAG) TARGET_BUILD_VARIANT = $(TARGET_BUILD_VARIANT))
-ifeq ("$(TARGET_BUILD_VARIANT)","user")
-    ccflags-y += -D FW_LOG_DEFAULT_ON=0
-    ccflags-y += -D BUILD_QA_DBG=0
-else
-    ccflags-y += -D FW_LOG_DEFAULT_ON=1
-    ccflags-y += -D BUILD_QA_DBG=1
-endif
+ccflags-y += -D FW_LOG_DEFAULT_ON=0
+ccflags-y += -D BUILD_QA_DBG=0
 
 
 ccflags-y += -D CONNAC20_CHIPID=$(BT_PLATFORM)
