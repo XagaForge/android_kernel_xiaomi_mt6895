@@ -21,12 +21,7 @@ endif
 # Force build fail on modpost warning
 KBUILD_MODPOST_FAIL_ON_WARNINGS := y
 
-$(info $(LOG_TAG) TARGET_BUILD_VARIANT = $(TARGET_BUILD_VARIANT))
-ifeq ("$(TARGET_BUILD_VARIANT)","user")
-    ccflags-y += -D FW_LOG_DEFAULT_ON=0
-else
-    ccflags-y += -D FW_LOG_DEFAULT_ON=1
-endif
+ccflags-y += -D FW_LOG_DEFAULT_ON=0
 
 
 # platform
