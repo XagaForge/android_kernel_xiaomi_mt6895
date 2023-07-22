@@ -45,7 +45,7 @@ int mtk_dprec_logger_pr(unsigned int type, char *fmt, ...);
 			break;                                                 \
 		mtk_dprec_logger_pr(DPREC_LOGGER_DEBUG, fmt, ##arg);           \
 		if (g_mobile_log)                                              \
-			pr_info("[DISP]" pr_fmt(fmt), ##arg);     \
+			pr_debug("[DISP]" pr_fmt(fmt), ##arg);     \
 	} while (0)
 
 #define DDP_PROFILE(fmt, arg...)                                               \
@@ -60,7 +60,7 @@ int mtk_dprec_logger_pr(unsigned int type, char *fmt, ...);
 #define DDPMSG(fmt, arg...)                                                    \
 	do {                                                                   \
 		mtk_dprec_logger_pr(DPREC_LOGGER_DEBUG, fmt, ##arg);           \
-		pr_info("[DISP]" pr_fmt(fmt), ##arg);             \
+		pr_debug("[DISP]" pr_fmt(fmt), ##arg);             \
 	} while (0)
 
 #define DDPDUMP(fmt, arg...)                                                   \
