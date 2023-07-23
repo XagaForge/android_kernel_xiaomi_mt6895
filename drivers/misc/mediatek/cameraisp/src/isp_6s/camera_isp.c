@@ -857,7 +857,7 @@ static bool g_is_dumping[ISP_DEV_NODE_NUM] = {0};
 	} \
 } while (0)
 
-#if 1
+#ifdef ISP_DEBUG
 #define IRQ_LOG_PRINTER(irq, ppb_in, logT_in) do {\
 		struct SV_LOG_STR *pSrc = &gSvLog[irq];\
 		char *ptr;\
