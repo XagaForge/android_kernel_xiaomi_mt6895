@@ -78,7 +78,7 @@ extern unsigned int g_dbg_level;
 #define FM_LOG_DBG(flag, fmt, args...) \
 	do { \
 		if ((FM_DBG <= (g_dbg_level&0x0000000f)) && ((flag)&0xfffffff0) & g_dbg_level) { \
-			pr_info("[" #flag "]" fmt, ## args); \
+			pr_debug("[" #flag "]" fmt, ## args); \
 		} \
 	} while (0)
 
