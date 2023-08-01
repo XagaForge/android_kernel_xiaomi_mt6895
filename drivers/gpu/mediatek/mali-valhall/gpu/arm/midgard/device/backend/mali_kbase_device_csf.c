@@ -460,8 +460,9 @@ int kbase_device_firmware_init_once(struct kbase_device *kbdev)
 			kbase_csf_firmware_term(kbdev);
 			goto out;
 		}
-
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 		kbase_csf_debugfs_init(kbdev);
+#endif
 		dev_info(kbdev->dev, "CSF firmware was initialized successfully\n");
 	}
 

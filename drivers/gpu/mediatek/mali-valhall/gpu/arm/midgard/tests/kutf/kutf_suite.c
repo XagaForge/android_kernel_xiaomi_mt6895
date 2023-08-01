@@ -1158,7 +1158,7 @@ void kutf_test_abort(struct kutf_context *context)
 }
 EXPORT_SYMBOL(kutf_test_abort);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 /**
  * init_kutf_core() - Module entry point.

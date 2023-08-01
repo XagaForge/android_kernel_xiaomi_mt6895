@@ -22,7 +22,7 @@ mali_kbase-y += \
     ipa/mali_kbase_ipa_simple.o \
     ipa/mali_kbase_ipa.o
 
-mali_kbase-$(CONFIG_DEBUG_FS) += ipa/mali_kbase_ipa_debugfs.o
+#mali_kbase-$(CONFIG_DEBUG_FS) += ipa/mali_kbase_ipa_debugfs.o
 
 ifeq ($(MALI_USE_CSF),1)
     mali_kbase-y += \

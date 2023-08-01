@@ -68,7 +68,7 @@ bool kbase_csf_cpu_queue_read_dump_req(struct kbase_context *kctx,
  */
 static inline bool kbase_csf_cpu_queue_dump_needed(struct kbase_context *kctx)
 {
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	return (atomic_read(&kctx->csf.cpu_queue.dump_req_status) ==
 		BASE_CSF_CPU_QUEUE_DUMP_ISSUED);
 #else

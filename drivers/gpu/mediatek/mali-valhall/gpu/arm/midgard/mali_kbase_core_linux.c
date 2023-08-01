@@ -398,7 +398,7 @@ static void kbase_file_delete(struct kbase_file *const kfile)
 	if (atomic_read(&kfile->setup_state) == KBASE_FILE_COMPLETE) {
 		struct kbase_context *kctx = kfile->kctx;
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 		kbasep_mem_profile_debugfs_remove(kctx);
 #endif
 
@@ -542,7 +542,7 @@ void kbase_release_device(struct kbase_device *kbdev)
 }
 EXPORT_SYMBOL(kbase_release_device);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #if KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE &&                            \
 	!(KERNEL_VERSION(4, 4, 28) <= LINUX_VERSION_CODE &&                    \
 	  KERNEL_VERSION(4, 5, 0) > LINUX_VERSION_CODE)
@@ -652,14 +652,14 @@ static const struct file_operations kbase_force_same_va_fops = {
 	.write = write_ctx_force_same_va,
 	.read = read_ctx_force_same_va,
 };
-#endif /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_MALI_MTK_DEBUG */
 
 static int kbase_file_create_kctx(struct kbase_file *const kfile,
 	base_context_create_flags const flags)
 {
 	struct kbase_device *kbdev = NULL;
 	struct kbase_context *kctx = NULL;
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	char kctx_name[64];
 #endif
 
@@ -690,7 +690,7 @@ static int kbase_file_create_kctx(struct kbase_file *const kfile,
 	if (kbdev->infinite_cache_active_default)
 		kbase_ctx_flag_set(kctx, KCTX_INFINITE_CACHE);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	snprintf(kctx_name, 64, "%d_%d", kctx->tgid, kctx->id);
 
 	mutex_init(&kctx->mem_profile_lock);
@@ -717,7 +717,7 @@ static int kbase_file_create_kctx(struct kbase_file *const kfile,
 
 		kbase_context_debugfs_init(kctx);
 	}
-#endif /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_MALI_MTK_DEBUG */
 
 	dev_vdbg(kbdev->dev, "created base context\n");
 
@@ -1299,32 +1299,11 @@ static int kbase_api_fence_validate(struct kbase_context *kctx,
 	return -ENOENT;
 #endif
 }
-
 static int kbase_api_mem_profile_add(struct kbase_context *kctx,
 		struct kbase_ioctl_mem_profile_add *data)
 {
-	char *buf;
-	int err;
-
-	if (data->len > KBASE_MEM_PROFILE_MAX_BUF_SIZE) {
-		dev_err(kctx->kbdev->dev, "mem_profile_add: buffer too big\n");
-		return -EINVAL;
-	}
-
-	buf = kmalloc(data->len, GFP_KERNEL);
-	if (ZERO_OR_NULL_PTR(buf))
-		return -ENOMEM;
-
-	err = copy_from_user(buf, u64_to_user_ptr(data->buffer),
-			data->len);
-	if (err) {
-		kfree(buf);
-		return -EFAULT;
-	}
-
-	return kbasep_mem_profile_debugfs_insert(kctx, buf, data->len);
+	return 0;
 }
-
 #if !MALI_USE_CSF
 static int kbase_api_soft_event_update(struct kbase_context *kctx,
 		struct kbase_ioctl_soft_event_update *update)
@@ -1577,14 +1556,14 @@ static int kbase_ioctl_cs_get_glb_iface(struct kbase_context *kctx,
 	kfree(stream_data);
 	return err;
 }
-
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 static int kbasep_ioctl_cs_cpu_queue_dump(struct kbase_context *kctx,
 			struct kbase_ioctl_cs_cpu_queue_info *cpu_queue_info)
 {
 	return kbase_csf_cpu_queue_dump(kctx, cpu_queue_info->buffer,
 					cpu_queue_info->size);
 }
-
+#endif
 #endif /* MALI_USE_CSF */
 
 static int kbasep_ioctl_context_priority_check(struct kbase_context *kctx,
@@ -1679,7 +1658,7 @@ static int kbasep_ioctl_set_limited_core_count(struct kbase_context *kctx,
 	kctx->limited_core_mask = limited_core_mask;
 	return 0;
 }
-
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 static int kbasep_ioctl_local_fence_wait(struct kbase_context *kctx,
 			struct kbase_ioctl_local_fence_wait *fence_wait)
 {
@@ -1732,6 +1711,7 @@ static int kbasep_ioctl_local_fence_wait(struct kbase_context *kctx,
 
 	return 0;
 }
+#endif
 
 static long kbase_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
@@ -1922,7 +1902,6 @@ static long kbase_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				struct kbase_ioctl_mem_profile_add,
 				kctx);
 		break;
-
 #if !MALI_USE_CSF
 	case KBASE_IOCTL_SOFT_EVENT_UPDATE:
 		KBASE_HANDLE_IOCTL_IN(KBASE_IOCTL_SOFT_EVENT_UPDATE,
@@ -2084,12 +2063,14 @@ static long kbase_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				union kbase_ioctl_cs_get_glb_iface,
 				kctx);
 		break;
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	case KBASE_IOCTL_CS_CPU_QUEUE_DUMP:
 		KBASE_HANDLE_IOCTL_IN(KBASE_IOCTL_CS_CPU_QUEUE_DUMP,
 				kbasep_ioctl_cs_cpu_queue_dump,
 				struct kbase_ioctl_cs_cpu_queue_info,
 				kctx);
 		break;
+#endif
 #endif /* MALI_USE_CSF */
 #if MALI_UNIT_TEST
 	case KBASE_IOCTL_TLSTREAM_STATS:
@@ -2111,14 +2092,15 @@ static long kbase_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				struct kbase_ioctl_set_limited_core_count,
 				kctx);
 		break;
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	case KBASE_IOCTL_LOCAL_FENCE_WAIT:
 		KBASE_HANDLE_IOCTL_IN(KBASE_IOCTL_LOCAL_FENCE_WAIT,
 				kbasep_ioctl_local_fence_wait,
 				struct kbase_ioctl_local_fence_wait,
 				kctx);
 		break;
+#endif
 	}
-
 	dev_warn(kbdev->dev, "Unknown ioctl 0x%x nr:%d", cmd, _IOC_NR(cmd));
 
 	return -ENOIOCTLCMD;
@@ -2145,7 +2127,7 @@ static ssize_t kbase_read(struct file *filp, char __user *buf, size_t count, lof
 		read_event = true;
 	else
 		read_error = kbase_csf_read_error(kctx, &event_data);
-
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	if (!read_event && !read_error) {
 		bool dump = kbase_csf_cpu_queue_read_dump_req(kctx,
 							&event_data);
@@ -2159,6 +2141,7 @@ static ssize_t kbase_read(struct file *filp, char __user *buf, size_t count, lof
 			dev_vdbg(kctx->kbdev->dev,
 				"Neither event nor error signaled");
 	}
+#endif
 
 	if (copy_to_user(buf, &event_data, data_size) != 0) {
 		dev_warn(kctx->kbdev->dev,
@@ -3628,7 +3611,7 @@ static ssize_t show_reset_timeout(struct device *dev,
 static DEVICE_ATTR(reset_timeout, S_IRUGO | S_IWUSR, show_reset_timeout,
 		set_reset_timeout);
 
-
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 static ssize_t show_mem_pool_size(struct device *dev,
 		struct device_attribute *attr, char * const buf)
 {
@@ -3925,6 +3908,7 @@ static ssize_t set_simplified_lp_mem_pool_max_size(struct device *dev,
 
 static DEVICE_ATTR(lp_max_size, 0600, show_simplified_lp_mem_pool_max_size,
 		set_simplified_lp_mem_pool_max_size);
+#endif
 
 /**
  * show_simplified_ctx_default_max_size - Show the default maximum size for the
@@ -4139,7 +4123,7 @@ static ssize_t update_serialize_jobs_setting(struct kbase_device *kbdev,
 	return count;
 }
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 /**
  * kbasep_serialize_jobs_seq_debugfs_show - Show callback for the serialize_jobs
  *					    debugfs file
@@ -4230,7 +4214,7 @@ static const struct file_operations kbasep_serialize_jobs_debugfs_fops = {
 	.release = single_release,
 };
 
-#endif /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_MALI_MTK_DEBUG */
 
 /**
  * show_serialize_jobs_sysfs - Show callback for serialize_jobs sysfs file.
@@ -4746,7 +4730,7 @@ void power_control_term(struct kbase_device *kbdev)
 }
 
 #ifdef MALI_KBASE_BUILD
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 static void trigger_reset(struct kbase_device *kbdev)
 {
@@ -5011,7 +4995,7 @@ void kbase_device_debugfs_term(struct kbase_device *kbdev)
 {
 	debugfs_remove_recursive(kbdev->mali_debugfs_directory);
 }
-#endif /* CONFIG_DEBUG_FS */
+#endif /* CONFIG_MALI_MTK_DEBUG */
 #endif /* MALI_KBASE_BUILD */
 
 static u32 config_system_coherency;
@@ -5273,22 +5257,26 @@ static struct attribute *kbase_attrs[] = {
 #endif
 #endif
 	&dev_attr_core_mask.attr,
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	&dev_attr_mem_pool_size.attr,
 	&dev_attr_mem_pool_max_size.attr,
 	&dev_attr_lp_mem_pool_size.attr,
 	&dev_attr_lp_mem_pool_max_size.attr,
+#endif
 #if !MALI_USE_CSF
 	&dev_attr_js_ctx_scheduling_mode.attr,
 #endif /* !MALI_USE_CSF */
 	NULL
 };
 
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 static struct attribute *kbase_mempool_attrs[] = {
 	&dev_attr_max_size.attr,
 	&dev_attr_lp_max_size.attr,
 	&dev_attr_ctx_default_max_size.attr,
 	NULL
 };
+#endif
 
 #define SYSFS_SCHEDULING_GROUP "scheduling"
 static const struct attribute_group kbase_scheduling_attr_group = {
@@ -5296,11 +5284,13 @@ static const struct attribute_group kbase_scheduling_attr_group = {
 	.attrs = kbase_scheduling_attrs,
 };
 
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #define SYSFS_MEMPOOL_GROUP "mempool"
 static const struct attribute_group kbase_mempool_attr_group = {
 	.name = SYSFS_MEMPOOL_GROUP,
 	.attrs = kbase_mempool_attrs,
 };
+#endif
 
 static const struct attribute_group kbase_attr_group = {
 	.attrs = kbase_attrs,
@@ -5329,7 +5319,7 @@ int kbase_sysfs_init(struct kbase_device *kbdev)
 			&kbase_attr_group);
 		return err;
 	}
-
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	err = sysfs_create_group(&kbdev->dev->kobj,
 			&kbase_mempool_attr_group);
 	if (err) {
@@ -5340,13 +5330,15 @@ int kbase_sysfs_init(struct kbase_device *kbdev)
 		sysfs_remove_group(&kbdev->dev->kobj,
 			&kbase_attr_group);
 	}
-
+#endif
 	return err;
 }
 
 void kbase_sysfs_term(struct kbase_device *kbdev)
 {
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	sysfs_remove_group(&kbdev->dev->kobj, &kbase_mempool_attr_group);
+#endif
 	sysfs_remove_group(&kbdev->dev->kobj, &kbase_scheduling_attr_group);
 	sysfs_remove_group(&kbdev->dev->kobj, &kbase_attr_group);
 	put_device(kbdev->dev);

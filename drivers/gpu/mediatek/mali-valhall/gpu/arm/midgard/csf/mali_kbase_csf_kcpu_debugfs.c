@@ -27,7 +27,7 @@
 #include "mali_kbase_sync.h"
 #endif
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 /**
  * kbasep_csf_kcpu_debugfs_print_queue() - Print additional info for KCPU

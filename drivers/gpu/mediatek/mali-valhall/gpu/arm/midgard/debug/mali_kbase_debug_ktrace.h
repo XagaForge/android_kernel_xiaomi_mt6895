@@ -65,7 +65,7 @@ void kbase_ktrace_term(struct kbase_device *kbdev);
  */
 void kbase_ktrace_hook_wrapper(void *param);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 /**
  * kbase_ktrace_debugfs_init - initialize kbase ktrace for debugfs usage, if
  *                             the selected targets support it.

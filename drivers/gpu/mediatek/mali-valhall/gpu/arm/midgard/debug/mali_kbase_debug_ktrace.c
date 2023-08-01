@@ -240,7 +240,7 @@ void kbasep_ktrace_dump(struct kbase_device *kbdev)
 	spin_unlock_irqrestore(&kbdev->ktrace.lock, flags);
 }
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 struct trace_seq_state {
 	struct kbase_ktrace_msg trace_buf[KBASE_KTRACE_SIZE];
 	u32 start;
@@ -348,7 +348,7 @@ void kbase_ktrace_debugfs_init(struct kbase_device *kbdev)
 
 #else /* KBASE_KTRACE_TARGET_RBUF  */
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 void kbase_ktrace_debugfs_init(struct kbase_device *kbdev)
 {
 	CSTD_UNUSED(kbdev);

@@ -23,7 +23,7 @@
 #include <device/mali_kbase_device.h>
 #include "mali_kbase_debug_job_fault.h"
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 /*GPU_CONTROL_REG(r)*/
 static int gpu_control_reg_snapshot[] = {

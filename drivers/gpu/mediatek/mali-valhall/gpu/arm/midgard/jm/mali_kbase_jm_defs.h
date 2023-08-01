@@ -124,7 +124,7 @@
 /* Reset the GPU after each atom completion */
 #define KBASE_SERIALIZE_RESET (1 << 2)
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 /**
  * struct base_job_fault_event - keeps track of the atom which faulted or which
  *                               completed after the faulty atom but before the
@@ -614,7 +614,7 @@ struct kbase_jd_atom {
 
 	u32 flush_id;
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	struct base_job_fault_event fault_event;
 #endif
 	struct list_head queue;

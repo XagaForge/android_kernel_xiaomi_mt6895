@@ -22,7 +22,7 @@
 #include <mali_kbase.h>
 #include <device/mali_kbase_device.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 /**
  * kbasep_gpu_memory_seq_show - Show callback for the @c gpu_memory debugfs file
  * @sfile: The debugfs entry

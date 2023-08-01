@@ -56,11 +56,13 @@
 
 #include <linux/of.h>
 
-#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
+#if IS_ENABLED(CONFIG_MTK_GPUFREQ_V2)
 #include <mtk_gpufreq.h>
+#endif
+#include <ged_dcs.h>
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #include <mali_kbase_hwaccess_time.h>
 #include <platform/mtk_platform_common.h>
-#include <ged_dcs.h>
 #include <ged_log.h>
 #if IS_ENABLED(CONFIG_MTK_IRQ_DBG)
 #include <linux/of_irq.h>

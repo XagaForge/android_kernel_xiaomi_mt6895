@@ -24,7 +24,7 @@
 #include <mali_kbase.h>
 #include <linux/seq_file.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 /**
  * kbasep_csf_tiler_heap_debugfs_show() - Print tiler heap information for per context

@@ -32,7 +32,7 @@
 #include <mmu/mali_kbase_mmu.h>
 #include <tl/mali_kbase_timeline.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #include <csf/mali_kbase_csf_csg_debugfs.h>
 #include <csf/mali_kbase_csf_kcpu_debugfs.h>
 #include <csf/mali_kbase_csf_tiler_heap_debugfs.h>
