@@ -418,7 +418,7 @@ void kbase_device_vinstr_term(struct kbase_device *kbdev)
 
 int kbase_device_io_history_init(struct kbase_device *kbdev)
 {
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	return kbase_io_history_init(&kbdev->io_history,
 			KBASEP_DEFAULT_REGISTER_HISTORY_SIZE);
 #else
@@ -429,7 +429,7 @@ int kbase_device_io_history_init(struct kbase_device *kbdev)
 
 void kbase_device_io_history_term(struct kbase_device *kbdev)
 {
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	kbase_io_history_term(&kbdev->io_history);
 #else
 	(void)kbdev;

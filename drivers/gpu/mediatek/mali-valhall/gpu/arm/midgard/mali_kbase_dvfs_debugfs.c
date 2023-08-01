@@ -23,7 +23,7 @@
 #include <mali_kbase.h>
 #include <linux/seq_file.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 /**
  * kbasep_dvfs_utilization_debugfs_show() - Print the DVFS utilization info

@@ -23,7 +23,7 @@
 #include <mali_kbase.h>
 #include <linux/seq_file.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 bool kbase_csf_cpu_queue_read_dump_req(struct kbase_context *kctx,
 					struct base_csf_notification *req)

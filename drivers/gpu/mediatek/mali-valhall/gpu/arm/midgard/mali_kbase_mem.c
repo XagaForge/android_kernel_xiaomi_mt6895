@@ -3255,7 +3255,7 @@ void kbase_gpu_vm_unlock(struct kbase_context *kctx)
 
 KBASE_EXPORT_TEST_API(kbase_gpu_vm_unlock);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 struct kbase_jit_debugfs_data {
 	int (*func)(struct kbase_jit_debugfs_data *);
 	struct mutex lock;

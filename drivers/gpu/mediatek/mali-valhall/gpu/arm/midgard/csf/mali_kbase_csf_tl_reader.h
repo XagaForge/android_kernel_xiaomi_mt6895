@@ -164,7 +164,7 @@ int kbase_csf_tl_reader_start(struct kbase_csf_tl_reader *self,
  */
 void kbase_csf_tl_reader_stop(struct kbase_csf_tl_reader *self);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 /**
  * kbase_csf_tl_reader_debugfs_init() -
  *	Initialize debugfs for CSFFW Timelime Stream Reader.

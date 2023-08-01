@@ -29,7 +29,7 @@
 #include <linux/list.h>
 #include <linux/mman.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
 #define DEFINE_DEBUGFS_ATTRIBUTE DEFINE_SIMPLE_ATTRIBUTE
 #endif
@@ -513,7 +513,7 @@ unsigned int kbase_csf_firmware_trace_buffer_read_data(
 }
 EXPORT_SYMBOL(kbase_csf_firmware_trace_buffer_read_data);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 
 #define U32_BITS 32
 static u64 get_trace_buffer_active_mask64(struct firmware_trace_buffer *tb)

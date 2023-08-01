@@ -25,7 +25,7 @@
 #include <mali_kbase_as_fault_debugfs.h>
 #include <device/mali_kbase_device.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #ifdef CONFIG_MALI_DEBUG
 
 static int kbase_as_fault_read(struct seq_file *sfile, void *data)
@@ -79,7 +79,7 @@ static const struct file_operations as_fault_fops = {
  */
 void kbase_as_fault_debugfs_init(struct kbase_device *kbdev)
 {
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #ifdef CONFIG_MALI_DEBUG
 	uint i;
 	char as_name[64];

@@ -2371,9 +2371,9 @@ static void KBASE_TLSTREAM_TL_KBASE_KCPUQUEUE_ENQUEUE_COMMAND(
 		 * entry
 		 */
 		break;
-#endif /* MALI_UNIT_TEST */
 	case BASE_KCPU_COMMAND_TYPE_COUNT:
 		break;
+#endif /* MALI_UNIT_TEST */
 	}
 }
 

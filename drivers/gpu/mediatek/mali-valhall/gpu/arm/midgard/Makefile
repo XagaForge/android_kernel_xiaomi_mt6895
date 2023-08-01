@@ -91,14 +91,9 @@ MTK_GPU_VERSION := $(LOCAL_MTK_GPU_VERSION)
 MTK_PLATFORM := $(MTK_PLATFORM_VERSION)
 CONFIG_MALI_CSF_SUPPORT := y
 CONFIG_MALI_REAL_HW := y
-CONFIG_MALI_DEBUG := y
 CONFIG_MALI_MIDGARD_DVFS := y
 CONFIG_MALI_DEVFREQ := y
-CONFIG_MALI_FENCE_DEBUG := y
-CONFIG_MALI_MTK_FENCE_DEBUG := y
 CONFIG_MALI_MTK_TIMEOUT_RESET := y
-CONFIG_MALI_MTK_KCPU_DEBUG := y
-CONFIG_MALI_MTK_DEBUG := y
 CONFIG_MALI_MTK_MEM_TRACK := y
 CONFIG_MALI_MTK_DEVFREQ := y
 CONFIG_MALI_MTK_DEVFREQ_THERMAL := y
@@ -310,21 +305,14 @@ mali_kbase-y += \
     mali_kbase_softjobs.o \
     mali_kbase_hw.o \
     mali_kbase_debug.o \
-    mali_kbase_gpu_memory_debugfs.o \
     mali_kbase_mem_linux.o \
     mali_kbase_core_linux.o \
-    mali_kbase_mem_profile_debugfs.o \
     mali_kbase_disjoint_events.o \
     mali_kbase_debug_mem_view.o \
     mali_kbase_gator_api.o \
     mali_kbase_smc.o \
     mali_kbase_mem_pool.o \
-    mali_kbase_mem_pool_debugfs.o \
-    mali_kbase_debugfs_helper.o \
     mali_kbase_strings.o \
-    mali_kbase_as_fault_debugfs.o \
-    mali_kbase_regs_history_debugfs.o \
-    mali_kbase_dvfs_debugfs.o \
     mali_power_gpu_frequency_trace.o \
     mali_kbase_trace_gpu_mem.o
 
@@ -351,7 +339,6 @@ else
         mali_kbase_debug_job_fault.o \
         mali_kbase_event.o \
         mali_kbase_jd.o \
-        mali_kbase_jd_debugfs.o \
         mali_kbase_js.o \
         mali_kbase_js_ctx_attr.o \
         mali_kbase_kinstr_jm.o

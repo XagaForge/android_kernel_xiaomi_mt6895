@@ -35,7 +35,7 @@
 #include <linux/math64.h>
 #include <asm/arch_timer.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #include "tl/mali_kbase_timeline_priv.h"
 #include <linux/debugfs.h>
 
@@ -64,7 +64,7 @@ struct kbase_csffw_tl_message {
 	u64 cycle_counter;
 } __packed __aligned(4);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 static int kbase_csf_tl_debugfs_poll_interval_read(void *data, u64 *val)
 {
 	struct kbase_device *kbdev = (struct kbase_device *)data;

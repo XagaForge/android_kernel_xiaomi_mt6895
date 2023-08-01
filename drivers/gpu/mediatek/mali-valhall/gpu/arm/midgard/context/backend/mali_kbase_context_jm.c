@@ -34,7 +34,7 @@
 #include <mmu/mali_kbase_mmu.h>
 #include <tl/mali_kbase_timeline.h>
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 #include <mali_kbase_debug_mem_view.h>
 #include <mali_kbase_mem_pool_debugfs.h>
 
@@ -147,7 +147,7 @@ static const struct kbase_context_init context_init[] = {
 	  "JS kctx initialization failed" },
 	{ kbase_jd_init, kbase_jd_exit, "JD initialization failed" },
 	{ kbase_context_submit_check, NULL, "Enabling job submission failed" },
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	{ kbase_debug_job_fault_context_init,
 	  kbase_debug_job_fault_context_term,
 	  "Job fault context initialization failed" },

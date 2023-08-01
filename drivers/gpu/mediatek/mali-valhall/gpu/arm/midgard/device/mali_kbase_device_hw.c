@@ -35,7 +35,7 @@ void kbase_reg_write(struct kbase_device *kbdev, u32 offset, u32 value)
 
 	writel(value, kbdev->reg + offset);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	if (unlikely(kbdev->io_history.enabled))
 		kbase_io_history_add(&kbdev->io_history, kbdev->reg + offset,
 				value, 1);
@@ -54,7 +54,7 @@ u32 kbase_reg_read(struct kbase_device *kbdev, u32 offset)
 
 	val = readl(kbdev->reg + offset);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	if (unlikely(kbdev->io_history.enabled))
 		kbase_io_history_add(&kbdev->io_history, kbdev->reg + offset,
 				val, 0);

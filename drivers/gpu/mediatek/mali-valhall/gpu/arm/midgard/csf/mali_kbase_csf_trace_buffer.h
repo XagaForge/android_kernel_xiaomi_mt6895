@@ -168,7 +168,7 @@ bool kbase_csf_firmware_trace_buffer_is_empty(
 unsigned int kbase_csf_firmware_trace_buffer_read_data(
 	struct firmware_trace_buffer *trace_buffer, u8 *data, unsigned int num_bytes);
 
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 /**
  * kbase_csf_fw_trace_buffer_debugfs_init() - Add debugfs entries for setting
  *                                         enable mask and dumping the binary

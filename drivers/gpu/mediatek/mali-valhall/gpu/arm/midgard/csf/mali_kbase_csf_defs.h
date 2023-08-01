@@ -702,7 +702,7 @@ struct kbase_csf_context {
 	struct kbase_csf_scheduler_context sched;
 	struct list_head error_list;
 	struct work_struct pending_submission_work;
-#if IS_ENABLED(CONFIG_DEBUG_FS)
+#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	struct kbase_csf_cpu_queue_context cpu_queue;
 #endif
 };
