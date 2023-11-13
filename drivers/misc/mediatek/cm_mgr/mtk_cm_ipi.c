@@ -36,7 +36,7 @@ void cm_set_ipi_enable(int enable)
 }
 EXPORT_SYMBOL(cm_set_ipi_enable);
 
-void cm_sspm_enable(enable)
+void cm_sspm_enable(int enable)
 {
 	cm_mgr_to_sspm_command(IPI_CM_MGR_ENABLE, enable);
 }
