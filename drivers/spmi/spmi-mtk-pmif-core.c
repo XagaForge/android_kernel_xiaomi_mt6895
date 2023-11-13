@@ -554,23 +554,26 @@ static void pmif_cmd_err_parity_err_irq_handler(int irq, void *data)
 {
 	spmi_dump_spmimst_all_reg();
 	spmi_dump_pmif_record_reg();
-	if (IS_ENABLED(CONFIG_MTK_AEE_FEATURE))
+	#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
 		aee_kernel_warning("PMIF", "PMIF:parity error");
+	#endif
 }
 
 static void pmif_pmif_acc_vio_irq_handler(int irq, void *data)
 {
 	spmi_dump_pmif_record_reg();
 	spmi_dump_pmif_acc_vio_reg();
-	if (IS_ENABLED(CONFIG_MTK_AEE_FEATURE))
+	#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
 		aee_kernel_warning("PMIF", "PMIF:pmif_acc_vio");
+	#endif
 }
 
 static void pmif_pmic_acc_vio_irq_handler(int irq, void *data)
 {
 	spmi_dump_pmic_acc_vio_reg();
-	if (IS_ENABLED(CONFIG_MTK_AEE_FEATURE))
+	#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
 		aee_kernel_warning("PMIF", "PMIF:pmic_acc_vio");
+	#endif
 }
 
 static void pmif_lat_limit_reached_irq_handler(int irq, void *data)
@@ -582,8 +585,9 @@ static void pmif_lat_limit_reached_irq_handler(int irq, void *data)
 static void pmif_hw_monitor_irq_handler(int irq, void *data)
 {
 	spmi_dump_pmif_record_reg();
-	if (IS_ENABLED(CONFIG_MTK_AEE_FEATURE))
+	#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
 		aee_kernel_warning("PMIF", "PMIF:pmif_hw_monitor_match");
+	#endif
 }
 
 static void pmif_wdt_irq_handler(int irq, void *data)
