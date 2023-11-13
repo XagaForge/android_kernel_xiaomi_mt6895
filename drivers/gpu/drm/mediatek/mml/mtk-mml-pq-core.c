@@ -1853,7 +1853,7 @@ static bool ut_inited;
 static struct list_head ut_mml_tasks;
 static u32 ut_task_cnt;
 
-static void ut_init()
+static void ut_init(void)
 {
 	if (ut_inited)
 		return;
