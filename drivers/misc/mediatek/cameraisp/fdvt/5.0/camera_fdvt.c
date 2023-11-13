@@ -2624,7 +2624,9 @@ static signed int FDVT_WaitIrq(FDVT_WAIT_IRQ_STRUCT *WaitIrq)
 		log_err("interrupted by system, timeout(%d),irq Type/User/Sts/whichReq/Pid(0x%x/%d/0x%x/%d/%d)\n",
 		Timeout, WaitIrq->Type, WaitIrq->UserKey,
 		WaitIrq->Status, whichReq, WaitIrq->ProcessID);
+#if IS_ENABLED(CONFIG_MTK_IRQ_DBG)
 		mt_irq_dump_status(FDVTInfo.IrqNum);
+#endif
 		/* actually it should be -ERESTARTSYS */
 		Ret = -ERESTARTSYS;
 		goto EXIT;
@@ -2659,7 +2661,9 @@ static signed int FDVT_WaitIrq(FDVT_WAIT_IRQ_STRUCT *WaitIrq)
 		if (WaitIrq->bDumpReg)
 			FDVT_DumpReg();
 
+#if IS_ENABLED(CONFIG_MTK_IRQ_DBG)
 		mt_irq_dump_status(FDVTInfo.IrqNum);
+#endif
 
 		Ret = -EFAULT;
 		goto EXIT;
