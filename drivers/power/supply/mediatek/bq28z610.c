@@ -523,7 +523,7 @@ static int fg_read_rm(struct bq_fg_chip *bq)
 	u16 rm = 0;
 	bool retry = false;
 	int ret = 0;
-	static pre_rm =2580;
+	static int pre_rm =2580;
 
 retry:
 	ret = fg_read_word(bq, bq->regs[BQ_FG_REG_RM], &rm);

@@ -734,7 +734,7 @@ static void check_dynamic_mivr(struct mtk_charger *info)
 	}
 }
 
-int charger_manager_get_sic_current()
+int charger_manager_get_sic_current(void)
 {
 	if (pinfo == NULL)
 	{
@@ -770,7 +770,7 @@ void night_charging_set_flag(bool night_charging)
 }
 EXPORT_SYMBOL(night_charging_set_flag);
 
-int night_charging_get_flag()
+int night_charging_get_flag(void)
 {
 	if(pinfo ==NULL)
 		return 0;
@@ -864,7 +864,7 @@ void manual_get_cc_toggle(bool *cc_toggle)
 }
 EXPORT_SYMBOL(manual_get_cc_toggle);
 
-bool manual_get_cid_status()
+bool manual_get_cid_status(void)
 {
 	if(pinfo == NULL)
 		return true;
@@ -2940,7 +2940,7 @@ void set_soft_reset_status(int val)
 }
 EXPORT_SYMBOL(set_soft_reset_status);
 
-int get_soft_reset_status()
+int get_soft_reset_status(void)
 {
 	if (pinfo == NULL)
 		return 0;
