@@ -259,7 +259,7 @@ out:
 	return shm;
 }
 
-static int auth_ca_name()
+static int auth_ca_name(void)
 {
 	char *ca_path = NULL;
 	char tpath[512];
