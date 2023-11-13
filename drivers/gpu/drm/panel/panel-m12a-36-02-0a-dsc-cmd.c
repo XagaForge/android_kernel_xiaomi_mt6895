@@ -965,7 +965,7 @@ static struct LCM_setting_table lbm_demura_non_144Hz[] = {
 	{0xC0, 06, {0xC0,0x12,0x34,0x00,0x00,0x00}},
 };
 
-static int get_build_id() {
+static int get_build_id(void) {
 	static bool  is_update =false;
 
 	if (is_update) {
