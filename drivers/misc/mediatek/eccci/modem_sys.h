@@ -241,7 +241,9 @@ void ccci_md_config_layout_6293(struct ccci_modem *md);
 extern int ccci_modem_init_common(struct platform_device *plat_dev,
 	struct ccci_dev_cfg *dev_cfg, struct md_hw_info *md_hw);
 
+#if IS_ENABLED(CONFIG_MTK_AEE_IPANIC)
 extern int mrdump_mini_add_extra_file(unsigned long vaddr, unsigned long paddr,
 	unsigned long size, const char *name);
+#endif
 
 #endif	/* __CCCI_MODEM_H__ */
