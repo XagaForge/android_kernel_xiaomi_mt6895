@@ -32,7 +32,7 @@ static const unsigned int usb_extcon_cable[] = {
 	EXTCON_USB_HOST,
 	EXTCON_NONE,
 };
-static global_role = 0;
+static int global_role = 0;
 
 static void mtk_usb_extcon_update_role(struct work_struct *work)
 {
