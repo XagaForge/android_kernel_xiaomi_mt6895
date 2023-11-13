@@ -61,7 +61,7 @@ EXPORT_SYMBOL_GPL(ssc_kobj);
 static BLOCKING_NOTIFIER_HEAD(vlogic_bound_chain);
 static struct regulator *ssc_vcore_voter;
 
-static int set_vcore_vlogic_bound(en)
+static int set_vcore_vlogic_bound(int en)
 {
 	int ret;
 
