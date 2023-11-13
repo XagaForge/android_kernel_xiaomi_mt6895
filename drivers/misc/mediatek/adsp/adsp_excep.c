@@ -33,7 +33,9 @@
 
 static char *adsp_ke_buffer;
 static struct adsp_exception_control excep_ctrl;
+#if IS_ENABLED(CONFIG_MTK_AEE_FEATURE)
 static bool suppress_test_ee;
+#endif
 
 static u32 copy_from_buffer(void *dest, size_t destsize, const void *src,
 			    size_t srcsize, u32 offset, size_t request)
