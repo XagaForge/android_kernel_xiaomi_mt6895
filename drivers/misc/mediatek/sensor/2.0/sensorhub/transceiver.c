@@ -647,7 +647,7 @@ static int transceiver_config(struct hf_device *hf_dev,
 		SENS_COMM_CTRL_CONFIG_CMD, data, length);
 }
 
-static transceiver_selftest(struct hf_device *hf_dev,
+static int transceiver_selftest(struct hf_device *hf_dev,
 		int sensor_type)
 {
 	return transceiver_comm_with(sensor_type,
