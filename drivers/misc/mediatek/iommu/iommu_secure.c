@@ -227,7 +227,7 @@ int ao_secure_dbg_switch_by_atf(uint32_t type,
 }
 EXPORT_SYMBOL_GPL(ao_secure_dbg_switch_by_atf);
 
-mtk_iommu_secure_bk_tf_dump(uint32_t type, uint32_t id, uint32_t bank,
+int mtk_iommu_secure_bk_tf_dump(uint32_t type, uint32_t id, uint32_t bank,
 		u32 *iova, u32 *pa, u32 *fault_id)
 {
 	int ret;
