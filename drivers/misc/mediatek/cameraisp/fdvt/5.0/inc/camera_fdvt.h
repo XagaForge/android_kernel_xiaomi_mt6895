@@ -41,7 +41,9 @@
  */
 #define FDVT_INT_ST                 (1<<0)
 
+#if IS_ENABLED(CONFIG_MTK_IRQ_DBG)
 extern void mt_irq_dump_status(int irq);
+#endif
 
 struct FDVT_REG_STRUCT {
 	unsigned int module;
