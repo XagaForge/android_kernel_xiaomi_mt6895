@@ -32,7 +32,6 @@
 #include "../mediatek/mediatek_v2/mtk_drm_graphics_base.h"
 #include "../mediatek/mediatek_v2/mtk_log.h"
 #endif
-#include "../mediatek/mediatek_v2/mi_disp/mi_dsi_panel_count.h"
 #include "../mediatek/mediatek_v2/mi_disp/mi_panel_ext.h"
 #include "mi_dsi_panel.h"
 
@@ -2961,9 +2960,6 @@ static int panel_fod_lhbm_init (struct mtk_dsi* dsi)
 	dsi->mi_cfg.lhbm_ui_ready_delay_frame = 5;
 	dsi->mi_cfg.lhbm_ui_ready_delay_frame_aod = 7;
 	dsi->mi_cfg.local_hbm_enabled = 1;
-	dsi->mi_cfg.fod_low_brightness_allow = 1;
-	dsi->mi_cfg.fod_low_brightness_clone_threshold = 200;
-	dsi->mi_cfg.fod_low_brightness_lux_threshold = 3;
 
 	return 0;
 }
