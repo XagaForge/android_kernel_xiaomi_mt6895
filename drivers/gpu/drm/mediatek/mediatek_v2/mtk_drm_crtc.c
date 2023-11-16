@@ -60,6 +60,9 @@
 #include "mtk_debug.h"
 #include "mi_disp/mi_disp_lhbm.h"
 
+#ifdef CONFIG_MI_DISP_ESD_CHECK
+#include "mi_disp/mi_disp_esd_check.h"
+#endif
 #ifdef CONFIG_MI_DISP_FOD_SYNC
 #include "mi_disp/mi_drm_crtc.h"
 #endif
@@ -10189,6 +10192,10 @@ int mtk_drm_crtc_create(struct drm_device *drm_dev,
 		mtk_drm_cwb_init(&mtk_crtc->base);
 
 	mtk_disp_chk_recover_init(&mtk_crtc->base);
+#ifdef CONFIG_MI_DISP_ESD_CHECK
+	//mtk_disp_esd_chk_init(&mtk_crtc->base);
+	mi_disp_esd_chk_init(&mtk_crtc->base);
+#endif
 	mtk_drm_fake_vsync_init(&mtk_crtc->base);
 
 	if (mtk_crtc_support_dc_mode(&mtk_crtc->base)) {
