@@ -56,6 +56,13 @@ config MI_DISP_LOG
 	help
 	  This creates /dev/mi_display/disp_log.
 
+config MI_DISP_ESD_CHECK
+	bool "Xiaomi Display ESD Check support"
+	default n
+	depends on MI_DISP
+	help
+	  Use Xiaomi ESD Check to replace the MTK default scheme.
+
 config MI_DISP_SILKY_BRIGHTNESS_CRC
        bool "Xiaomi Display Panel crc DC support"
        default n

@@ -560,8 +560,13 @@ struct mtk_panel_funcs {
 	int (*send_ddic_cmd_pack)(struct drm_panel *panel,
 		void *dsi_drv, dcs_write_gce_pack cb, void *handle);
 #ifdef CONFIG_MI_DISP
+#ifdef CONFIG_MI_DISP_ESD_CHECK
+	void (*esd_restore_backlight)(struct drm_panel *panel);
+	int (*esd_check_read_prepare)(struct drm_panel *panel);
+#else
 	void (*esd_restore_backlight)(struct drm_panel *panel,
 		void *dsi_drv, dcs_write_gce cb, void *handle);
+#endif
 	/* power-on for vddi */
 	int (*panel_poweron)(struct drm_panel *panel);
 

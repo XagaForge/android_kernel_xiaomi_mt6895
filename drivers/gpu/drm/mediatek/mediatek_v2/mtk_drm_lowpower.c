@@ -80,6 +80,11 @@ static void mtk_drm_cmd_mode_enter_idle(struct drm_crtc *crtc)
 
 	mtk_drm_idlemgr_disable_crtc(crtc);
 	lcm_fps_ctx_reset(crtc);
+#ifdef CONFIG_MI_DISP_ESD_CHECK
+	if (mtk_crtc->esd_ctx) {
+		atomic_set(&mtk_crtc->esd_ctx->target_time, 1);
+	}
+#endif
 }
 
 static void mtk_drm_vdo_mode_leave_idle(struct drm_crtc *crtc)
