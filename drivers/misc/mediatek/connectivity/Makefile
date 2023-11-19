@@ -73,9 +73,10 @@ ifneq ($(KERNELRELEASE),)
 
     # for gen4m options
     export CONFIG_MTK_COMBO_WIFI_HIF=axi
-    export MTK_COMBO_CHIP=SOC2_1X1
-    export BT_PLATFORM=connac1x
-    export WLAN_CHIP_ID=6789
+    export CONNAC_VER=2_0
+    export MTK_COMBO_CHIP=CONNAC2X2_SOC7_0
+    export BT_PLATFORM=6895
+    export WLAN_CHIP_ID=6895
     export MTK_ANDROID_WMT=y
     export MTK_ANDROID_EMI=y
     export WIFI_IP_SET=1
@@ -124,12 +125,12 @@ ifneq ($(KERNELRELEASE),)
         obj-y += wlan_drv_gen4m/
     endif
 
-    obj-$(CONFIG_MTK_COMBO) += common/
+    obj-$(CONFIG_MTK_COMBO) += conninfra/
     obj-$(CONFIG_MTK_COMBO_WIFI) += wlan/adaptor/
-    obj-$(CONFIG_MTK_COMBO_CHIP_CONSYS_6789) += wlan/core/gen4m/
-    obj-$(CONFIG_MTK_BTIF) += bt/mt66xx/wmt/
+    obj-$(CONFIG_MTK_COMBO_CHIP_CONSYS_6895) += wlan/core/gen4m/
+    obj-$(CONFIG_MTK_BTIF) += bt/mt66xx/btif/
     obj-$(CONFIG_MTK_COMBO_GPS) += gps/gps_pwr/
-    obj-$(CONFIG_MTK_COMBO_GPS) += gps/gps_stp/
+    obj-$(CONFIG_MTK_COMBO_GPS) += gps/
     obj-$(CONFIG_MTK_FMRADIO) += fmradio/
     obj-$(CONFIG_MTK_COMBO) += connfem/
 
