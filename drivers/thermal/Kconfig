@@ -382,6 +382,27 @@ config DB8500_THERMAL
 	  created. Cooling devices can be bound to the trip points to cool this
 	  thermal zone if trip points reached.
 
+config MI_THERMAL_INTERFACE
+	tristate "xiaomi thermal control interface"
+	depends on THERMAL
+	default n
+	help
+	  This is xiaomi thermal control interface
+
+config MI_THERMAL_MULTI_CHARGE
+	bool "xiaomi thermal multi charge"
+	depends on MI_THERMAL_INTERFACE
+	default n
+	help
+	  This is xiaomi thermal multi charge
+
+config MI_THERMAL_ATC_ENABLE
+	bool "xiaomi thermal atc enable"
+	depends on MI_THERMAL_INTERFACE
+	default n
+	help
+	  This is xiaomi thermal atc enable
+
 config ARMADA_THERMAL
 	tristate "Marvell EBU Armada SoCs thermal management"
 	depends on ARCH_MVEBU || COMPILE_TEST
