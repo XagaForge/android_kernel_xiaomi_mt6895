@@ -797,7 +797,8 @@ exit:
 KBASE_EXPORT_TEST_API(kbase_ipa_control_unregister);
 
 int kbase_ipa_control_query(struct kbase_device *kbdev, const void *client,
-			    u64 *values, size_t num_values, u64 *protected_time)
+			    u64 *values, size_t num_values, u64 *protected_time,
+			    ktime_t *now)
 {
 	struct kbase_ipa_control *ipa_ctrl;
 	struct kbase_ipa_control_session *session;
@@ -833,8 +834,11 @@ int kbase_ipa_control_query(struct kbase_device *kbdev, const void *client,
 		prfcnt->accumulated_diff = 0;
 	}
 
+	if (now)
+		*now = ktime_get_raw();
+
 	if (protected_time) {
-		u64 time_now = ktime_get_ns();
+		u64 time_now = now ? ktime_to_ns(*now) : ktime_get_raw_ns();
 
 		/* This is the amount of protected-mode time spent prior to
 		 * the current protm period.
