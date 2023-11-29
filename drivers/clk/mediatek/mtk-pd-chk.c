@@ -330,6 +330,7 @@ static int mtk_pd_dbg_dump(struct notifier_block *nb,
 		if (pd_sta[nb->priority] == POWER_OFF_STA) {
 			/* dump devicelist belongs to current power domain */
 			pdchk_dump_enabled_power_domain(pds[nb->priority]);
+			pd_debug_dump(nb->priority, PD_PWR_ON);
 		}
 		if (pd_sta[nb->priority] == POWER_ON_STA)
 			pd_log_dump(nb->priority, PD_PWR_ON);
@@ -341,6 +342,7 @@ static int mtk_pd_dbg_dump(struct notifier_block *nb,
 		if (pd_sta[nb->priority] == POWER_ON_STA) {
 			/* dump devicelist belongs to current power domain */
 			pdchk_dump_enabled_power_domain(pds[nb->priority]);
+			pd_debug_dump(nb->priority, PD_PWR_OFF);
 		}
 		if (pd_sta[nb->priority] == POWER_OFF_STA)
 			pd_log_dump(nb->priority, PD_PWR_OFF);
