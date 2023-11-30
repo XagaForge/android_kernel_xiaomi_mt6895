@@ -1807,7 +1807,6 @@ static int panel_set_gir_off(struct drm_panel *panel)
 {
 	struct lcm *ctx;
 	int ret = -1;
-	char gir_off_write_cmd0[] = {0x5F, 0x01};
 	char gir_off_write_cmd1[] = {0x2F, 0x00};
 
 	struct mtk_ddic_dsi_msg cmd_msg = {
