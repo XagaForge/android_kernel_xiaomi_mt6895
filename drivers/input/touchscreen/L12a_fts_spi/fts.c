@@ -8155,30 +8155,6 @@ static const struct proc_ops fts_fw_version_ops = {
 	.proc_read = fts_fw_version_read,
 };
 
-static ssize_t fts_lockdown_info_read(struct file *file, char __user *buf,
-				      size_t count, loff_t *pos)
-{
-	int cnt = 0, ret = 0;
-	char tmp[TP_INFO_MAX_LENGTH];
-
-	if (*pos != 0)
-		return 0;
-
-	cnt = snprintf(tmp, TP_INFO_MAX_LENGTH,
-		       "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x,0x%02x\n",
-		       fts_info->lockdown_info[0], fts_info->lockdown_info[1],
-		       fts_info->lockdown_info[2], fts_info->lockdown_info[3],
-		       fts_info->lockdown_info[4], fts_info->lockdown_info[5],
-		       fts_info->lockdown_info[6], fts_info->lockdown_info[7]);
-	ret = copy_to_user(buf, tmp, cnt);
-out:
-	*pos += cnt;
-	if (ret != 0)
-		return 0;
-	else
-		return cnt;
-}
-
 static ssize_t fts_tp_always_active_write(struct file *file, const char __user *buf,
 				  size_t count, loff_t *pos)
 {
