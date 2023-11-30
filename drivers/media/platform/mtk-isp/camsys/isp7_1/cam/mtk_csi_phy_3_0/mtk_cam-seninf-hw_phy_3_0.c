@@ -3374,7 +3374,7 @@ static int mtk_cam_seninf_debug(struct seninf_ctx *ctx)
 
 static int mtk_cam_seninf_debugTest(struct seninf_ctx *ctx)
 {
-	void *base_ana, *base_cphy, *base_dphy, *base_csi, *base_mux;
+	void *base_csi, *base_mux;
 	unsigned int temp = 0;
 	//int pkg_cnt_changed = 0;
 	//unsigned int mipi_packet_cnt = 0;
