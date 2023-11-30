@@ -703,7 +703,7 @@ static void xmc_main_monitor_func(struct work_struct *work)
 	xmc_ops_get_charge_enable(chip->bbc_dev, &chip->bbc.charge_enable);
 	xmc_ops_get_powerpath_enable(chip->bbc_dev, &chip->bbc.input_enable);
 	xmc_ops_get_charge_state(chip->bbc_dev, &chip->bbc.state);
-	xmc_ops_charge_done(chip->bbc_dev, &chip->bbc.charge_done);
+	xmc_ops_charge_done(chip->bbc_dev, chip->bbc.charge_done);
 	xmc_ops_get_mivr_state(chip->bbc_dev, &chip->bbc.mivr);
 	xmc_ops_get_vbus(chip->bbc_dev, &chip->bbc.vbus);
 	xmc_ops_get_ibus(chip->bbc_dev, &chip->bbc.ibus);
