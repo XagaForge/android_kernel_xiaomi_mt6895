@@ -5243,7 +5243,7 @@ static void binder_free_proc(struct binder_proc *proc)
 {
 	struct binder_device *device;
 	struct binder_proc_ext *eproc =
-		container_of(proc, struct binder_proc_ext, proc);
+		binder_proc_ext_entry(proc);
 
 	BUG_ON(!list_empty(&proc->todo));
 	BUG_ON(!list_empty(&proc->delivered_death));
