@@ -130,6 +130,7 @@ ifneq ($(KERNELRELEASE),)
     obj-$(CONFIG_MTK_COMBO_CHIP_CONSYS_6895) += wlan/core/gen4m/
     obj-$(CONFIG_MTK_BTIF) += bt/mt66xx/btif/
     obj-$(CONFIG_MTK_COMBO_GPS) += gps/gps_pwr/
+    obj-$(CONFIG_MTK_COMBO_GPS) += gps/gps_scp/
     obj-$(CONFIG_MTK_COMBO_GPS) += gps/
     obj-$(CONFIG_MTK_FMRADIO) += fmradio/
     obj-$(CONFIG_MTK_COMBO) += connfem/
