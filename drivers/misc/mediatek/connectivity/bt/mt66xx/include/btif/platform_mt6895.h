@@ -1466,9 +1466,8 @@ static inline int32_t bgfsys_power_off(void)
 
 static inline void fwp_get_patch_names(void)
 {
-	uint8_t flavor = FLAVOR_NONE;
-	u_int8_t has_flavor = fwp_has_flavor_bin(&flavor);
+	const char *flavor = fwp_get_flavor_bin();
 
-	compose_fw_name(has_flavor, flavor, BIN_NAME_MCU, BIN_NAME_BT);
+	compose_fw_name(flavor, BIN_NAME_MCU, BIN_NAME_BT);
 }
 #endif

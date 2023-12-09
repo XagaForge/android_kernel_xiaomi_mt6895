@@ -198,37 +198,35 @@ static void inline bt_dump_memory8(uint8_t *buf, uint32_t len)
 
 }
 
-static inline u_int8_t fwp_has_flavor_bin(uint8_t *flavor)
+static inline const char* fwp_get_flavor_bin()
 {
 	#define TARGET_KEY "flavor_bin"
-	u_int8_t ret = FALSE;
-	const char *str;
+	const char *str = NULL;
 	struct device_node *node = NULL;
 	node = of_find_compatible_node(NULL, NULL, "mediatek,bt");
 	if (node) {
 		if (of_property_read_string(node, TARGET_KEY, &str)) {
 			BTMTK_INFO("%s: get %s: fail", __func__, TARGET_KEY);
 		} else {
-			*flavor = *str;
-			BTMTK_INFO("%s: get %s: %c", __func__, TARGET_KEY, *flavor);
-			ret = TRUE;
+			BTMTK_INFO("%s: get %s: %s", __func__, TARGET_KEY, str);
 		}
-	} else
+	} else {
 		BTMTK_INFO("%s: get dts[mediatek,bt] fail!", __func__);
-	return ret;
+	}
+	return str;
 }
 
-static inline void compose_fw_name(u_int8_t has_flavor, uint8_t flavor,
-					   const uint8_t *bin_mcu_name,
-					   const uint8_t *bin_bt_name)
+static inline void compose_fw_name(const char *flavor,
+					   const char *bin_mcu_name,
+					   const char *bin_bt_name)
 {
-	if (has_flavor) {
-		if (snprintf(g_fwp_names[0][0], FW_NAME_LEN, "%s%c_1_hdr.bin", bin_mcu_name, flavor) < 0)
+	if (flavor) {
+		if (snprintf(g_fwp_names[0][0], FW_NAME_LEN, "%s%s_1_hdr.bin", bin_mcu_name, flavor) < 0)
 			BTMTK_ERR("%s: has_flavor[0][0]", __func__);
 
-		if (snprintf(g_fwp_names[1][0], FW_NAME_LEN, "%s%c_1_hdr.bin", bin_bt_name, flavor) < 0)
+		if (snprintf(g_fwp_names[1][0], FW_NAME_LEN, "%s%s_1_hdr.bin", bin_bt_name, flavor) < 0)
 			BTMTK_ERR("%s: has_flavor[1][0]", __func__);
-	} else	{
+	} else {
 		if (snprintf(g_fwp_names[0][0], FW_NAME_LEN, "%s_1_hdr.bin", bin_mcu_name) < 0)
 			BTMTK_ERR("%s: no_flavor[0][0]", __func__);
 		if (snprintf(g_fwp_names[1][0], FW_NAME_LEN, "%s_1_hdr.bin", bin_bt_name) < 0)
@@ -236,10 +234,10 @@ static inline void compose_fw_name(u_int8_t has_flavor, uint8_t flavor,
 	}
 
 #if (CUSTOMER_FW_UPDATE == 1)
-	if (has_flavor) {
-		if (snprintf(g_fwp_names[0][1], FW_NAME_LEN, "%s%c_1_hdr-u.bin", bin_mcu_name, flavor) < 0)
+	if (flavor) {
+		if (snprintf(g_fwp_names[0][1], FW_NAME_LEN, "%s%s_1_hdr-u.bin", bin_mcu_name, flavor) < 0)
 			BTMTK_ERR("%s: has_flavor[0][1]", __func__);
-		if (snprintf(g_fwp_names[1][1], FW_NAME_LEN, "%s%c_1_hdr-u.bin", bin_bt_name, flavor) < 0)
+		if (snprintf(g_fwp_names[1][1], FW_NAME_LEN, "%s%s_1_hdr-u.bin", bin_bt_name, flavor) < 0)
 			BTMTK_ERR("%s: has_flavor[1][1]", __func__);
 	} else	{
 		if (snprintf(g_fwp_names[0][1], FW_NAME_LEN, "%s_1_hdr-u.bin", bin_mcu_name) < 0)
