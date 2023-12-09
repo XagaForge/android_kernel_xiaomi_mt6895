@@ -119,10 +119,9 @@ void soc2_2x2ConstructFirmwarePrio(struct GLUE_INFO *prGlueInfo,
 	uint8_t *pucNameIdx, uint8_t ucMaxNameIdx)
 {
 	uint8_t ucIdx = 0;
-	uint8_t aucFlavor[2] = {0};
 	int ret = 0;
+	const char *aucFlavor = kalGetFwFlavor();
 
-	kalGetFwFlavor(&aucFlavor[0]);
 	for (ucIdx = 0; apucSoc2_2x2FwName[ucIdx]; ucIdx++) {
 		if ((*pucNameIdx + 3) >= ucMaxNameIdx) {
 			/* the table is not large enough */
