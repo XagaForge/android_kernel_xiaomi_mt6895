@@ -8590,24 +8590,24 @@ int32_t __weak kalSetCpuNumFreq(uint32_t u4CoreNum,
 	return 0;
 }
 
-int32_t __weak kalGetFwFlavorByPlat(uint8_t *flavor)
+const char* __weak kalGetFwFlavorByPlat(void)
 {
 	DBGLOG(SW4, TRACE, "NO firmware flavor build.\n");
-	return 0;
+	return NULL;
 }
 
-int32_t kalGetFwFlavor(uint8_t *flavor)
+const char* kalGetFwFlavor(void)
 {
-	struct mt66xx_hif_driver_data *prDriverData;
+	struct mt66xx_hif_driver_data *prDriverData = get_platform_driver_data();
+	const char *platFlavor = kalGetFwFlavorByPlat();
 
-	prDriverData = get_platform_driver_data();
-
-	if (prDriverData->fw_flavor) {
-		*flavor = prDriverData->fw_flavor[0];
-		return 1;
+	if (platFlavor) {
+		return platFlavor;
+	} else if (prDriverData->fw_flavor) {
+		return prDriverData->fw_flavor;
 	}
 
-	return kalGetFwFlavorByPlat(flavor);
+	return "";
 }
 
 int32_t __weak kalGetConnsysVerId(void)
