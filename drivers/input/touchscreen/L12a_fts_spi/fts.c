@@ -6818,10 +6818,9 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 		blank = *(int *)(evdata->data);
 		logError(1, "%s %s: val:%lu,blank:%u\n", tag, __func__, val, blank);
 
-		if (val == MI_DISP_DPMS_EARLY_EVENT
-		    && (blank == MI_DISP_DPMS_POWERDOWN
+		if (blank == MI_DISP_DPMS_POWERDOWN
 			|| blank == MI_DISP_DPMS_LP1
-			|| blank == MI_DISP_DPMS_LP2)) {
+			|| blank == MI_DISP_DPMS_LP2) {
 			if (info->sensor_sleep)
 				return NOTIFY_OK;
 
@@ -6829,7 +6828,7 @@ static int fts_drm_state_chg_callback(struct notifier_block *nb,
 
 			flush_workqueue(info->event_wq);
 			queue_work(info->event_wq, &info->suspend_work);
-		} else if (val == MI_DISP_DPMS_EVENT && blank == MI_DISP_DPMS_ON) {
+		} else if (blank == MI_DISP_DPMS_ON) {
 			if (!info->sensor_sleep)
 				return NOTIFY_OK;
 
