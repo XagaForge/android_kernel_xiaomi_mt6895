@@ -109,7 +109,9 @@ unsigned long g_ulFlag;/* GLUE_FLAG_XXX */
 struct completion g_RstOffComp;
 struct completion g_RstOnComp;
 struct completion g_triggerComp;
+#if defined(CONFIG_ANDROID) && (CFG_ENABLE_WAKE_LOCK)
 KAL_WAKE_LOCK_T *g_IntrWakeLock;
+#endif
 struct task_struct *wlan_reset_thread;
 static int g_rst_data;
 u_int8_t g_IsWholeChipRst = FALSE;
@@ -264,7 +266,9 @@ void glResetInit(struct GLUE_INFO *prGlueInfo)
 	fw_log_connsys_coredump_init();
 #endif
 	update_driver_reset_status(fgIsResetting);
+#if defined(CONFIG_ANDROID) && (CFG_ENABLE_WAKE_LOCK)
 	KAL_WAKE_LOCK_INIT(NULL, g_IntrWakeLock, "WLAN Reset");
+#endif
 	init_waitqueue_head(&g_waitq_rst);
 	init_completion(&g_RstOffComp);
 	init_completion(&g_RstOnComp);
@@ -719,7 +723,9 @@ void glRstWholeChipRstParamInit(void)
 }
 void glRstSetRstEndEvent(void)
 {
+#if defined(CONFIG_ANDROID) && (CFG_ENABLE_WAKE_LOCK)
 	KAL_WAKE_LOCK(NULL, g_IntrWakeLock);
+#endif
 
 	set_bit(GLUE_FLAG_RST_END_BIT, &g_ulFlag);
 
@@ -1053,8 +1059,10 @@ int wlan_reset_thread_main(void *data)
 	g_u4WlanRstThreadPid = KAL_GET_CURRENT_THREAD_ID();
 
 	while (TRUE) {
+#if defined(CONFIG_ANDROID) && (CFG_ENABLE_WAKE_LOCK)
 		/* Unlock wakelock if hif_thread going to idle */
 		KAL_WAKE_UNLOCK(NULL, prWlanRstThreadWakeLock);
+#endif
 		/*
 		 * sleep on waitqueue if no events occurred. Event contain
 		 * (1) GLUE_FLAG_HALT (2) GLUE_FLAG_RST
@@ -1073,8 +1081,10 @@ int wlan_reset_thread_main(void *data)
 #endif
 		WIPHY_PRIV(wlanGetWiphy(), prGlueInfo);
 		if (test_and_clear_bit(GLUE_FLAG_RST_START_BIT, &g_ulFlag)) {
+#if defined(CONFIG_ANDROID) && (CFG_ENABLE_WAKE_LOCK)
 			if (KAL_WAKE_LOCK_ACTIVE(NULL, g_IntrWakeLock))
 				KAL_WAKE_UNLOCK(NULL, g_IntrWakeLock);
+#endif
 
 			if (g_IsWholeChipRst) {
 #if (CFG_ANDORID_CONNINFRA_COREDUMP_SUPPORT == 1)
@@ -1115,8 +1125,10 @@ int wlan_reset_thread_main(void *data)
 				g_SubsysRstTotalCnt);
 		}
 		if (test_and_clear_bit(GLUE_FLAG_RST_END_BIT, &g_ulFlag)) {
+#if defined(CONFIG_ANDROID) && (CFG_ENABLE_WAKE_LOCK)
 			if (KAL_WAKE_LOCK_ACTIVE(NULL, g_IntrWakeLock))
 				KAL_WAKE_UNLOCK(NULL, g_IntrWakeLock);
+#endif
 			DBGLOG(INIT, INFO, "Whole chip reset end start\n");
 			glResetMsgHandler(WMTMSG_TYPE_RESET,
 				WMTRSTMSG_RESET_END);
