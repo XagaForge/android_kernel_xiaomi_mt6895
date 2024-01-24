@@ -56,7 +56,7 @@ static struct scp_elliptic_reserved_mem_t debug_segment;
 int32_t elliptic_debug_io_open(void)
 {
 
-	pr_info("[ELUS] %s()", __func__);
+	pr_debug("[ELUS] %s()", __func__);
 	if (debug_segment.reserved == 0) {
 		debug_segment.phys =
 			scp_get_reserve_mem_phys(SCP_ELLIPTIC_DEBUG_MEM);
@@ -73,7 +73,7 @@ int32_t elliptic_debug_io_open(void)
 
 int32_t elliptic_debug_io_close(void)
 {
-	pr_info("[ELUS] %s()", __func__);
+	pr_debug("[ELUS] %s()", __func__);
 	return 0;
 }
 
@@ -96,7 +96,7 @@ static void copy_to_local_ap_cache(
 		struct elliptic_shared_data_block *data_block =
 		    elliptic_get_shared_obj(shared_object_id);
 		memcpy(data_block->buffer, payload, shared_object_size);
-		pr_info("[ELUS] %s copied to local AP cache, size: %u",
+		pr_debug("[ELUS] %s copied to local AP cache, size: %u",
 			       name, msg_header->data_size);
 	} else {
 		pr_debug("[ELUS] %s - illegal size: %u",
@@ -164,7 +164,7 @@ static int elliptic_data_io_ipi_handler(
 			continue;
 		}
 
-		pr_info("[ELUS] Got data via %s, counter:%u parameter_id:%u len:%u",
+		pr_debug("[ELUS] Got data via %s, counter:%u parameter_id:%u len:%u",
 				via_str,
 				(unsigned int)current_ipi_counter,
 				(unsigned int)header->parameter_id,
@@ -311,7 +311,7 @@ int32_t elliptic_data_io_write(uint32_t message_id, const char *data,
 
 int elliptic_data_io_cleanup(void)
 {
-	pr_info("[ELUS] Unimplemented");
+	pr_debug("[ELUS] Unimplemented");
 	return 0;
 }
 
