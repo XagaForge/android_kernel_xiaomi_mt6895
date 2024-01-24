@@ -100,12 +100,12 @@ static void consys_print_log(const char *title, struct conn_debug_info_mt6895 *i
 		else
 			pr_notice("%s debug_buf len is not enough\n", __func__);
 	}
-	pr_info("%s\n",debug_buf);
+	pr_debug("%s\n",debug_buf);
 }
 
 static void consys_print_power_debug(int level)
 {
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 
 	if (level >= 0) {
 		consys_print_power_debug_dbg_level_0_mt6895_debug_gen(level, debug_info);
@@ -123,7 +123,7 @@ static void consys_print_power_debug(int level)
 
 static void consys_print_bus_debug(int level)
 {
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 
 	consys_print_bus_slpprot_debug_dbg_level_0_mt6895_debug_gen(level, debug_info);
 	consys_print_log("[slpprot_a]", debug_info);
@@ -143,7 +143,7 @@ static void consys_print_bus_debug(int level)
 int consys_print_debug_mt6895(int level)
 {
 	if (level < 0 || level > 2) {
-		pr_info("%s level[%d] unexpected value.");
+		pr_debug("%s level[%d] unexpected value.");
 		return 0;
 	}
 
@@ -180,7 +180,7 @@ static inline unsigned int __consys_bus_hang_clock_detect(void)
 	}
 
 	if (r != 0x6)
-		pr_info("%s fail:0x1802_3000 = %x\n", __func__, r);
+		pr_debug("%s fail:0x1802_3000 = %x\n", __func__, r);
 	return r;
 }
 
@@ -203,7 +203,7 @@ static int consys_check_conninfra_on_domain(void)
 	r2 = CONSYS_REG_READ_BIT(INFRACFG_AO_REG_BASE +
 		CONSYS_GEN_INFRASYS_PROTECT_RDY_STA_1_OFFSET_ADDR, (0x1 << 12));
 	if (r1 || r2) {
-		pr_info("%s 0x1000_1C9C[0] = %x, 0x1000_1C5C[12] = %x\n", __func__, r1, r2);
+		pr_debug("%s 0x1000_1C9C[0] = %x, 0x1000_1C5C[12] = %x\n", __func__, r1, r2);
 		return 0;
 	}
 	return 1;
@@ -245,7 +245,7 @@ static int __consys_check_reg_readable(int check_type)
 	}
 
 	if (consys_check_conninfra_off_domain() == 0) {
-		pr_info("%s: check conninfra off failed\n", __func__);
+		pr_debug("%s: check conninfra off failed\n", __func__);
 		consys_print_debug_mt6895(1);
 		if (check_type == 0 || check_type == 2)
 			return 0;
@@ -263,7 +263,7 @@ static int __consys_check_reg_readable(int check_type)
 	r = CONSYS_REG_READ_BIT(CONN_DBG_CTL_CONN_INFRA_BUS_TIMEOUT_IRQ_ADDR,
 			(0x1 << 0) | (0x1 << 1) | (0x1 << 2));
 	if (r != 0) {
-		pr_info("%s bus timeout 0x1802_3400[2:0] = 0x%x\n", __func__, r);
+		pr_debug("%s bus timeout 0x1802_3400[2:0] = 0x%x\n", __func__, r);
 		consys_print_debug_mt6895(2);
 		if (check_type == 2)
 			return ret;
@@ -329,7 +329,7 @@ int consys_reg_init(struct platform_device *pdev)
 	int flag, i = 0;
 
 	node = pdev->dev.of_node;
-	pr_info("[%s] node=[%p]\n", __func__, node);
+	pr_debug("[%s] node=[%p]\n", __func__, node);
 	if (node) {
 		for (i = 0; i < CONSYS_BASE_ADDR_MAX; i++) {
 			base_addr = &conn_reg_mt6895.reg_base_addr[i];
@@ -346,7 +346,7 @@ int consys_reg_init(struct platform_device *pdev)
 				(unsigned long) of_iomap(node, i);
 			of_get_address(node, i, &(base_addr->size), &flag);
 
-			pr_info("Get Index(%d-%s) phy(0x%zx) baseAddr=(0x%zx) size=(0x%zx)",
+			pr_debug("Get Index(%d-%s) phy(0x%zx) baseAddr=(0x%zx) size=(0x%zx)",
 				i, consys_base_addr_index_to_str[i], base_addr->phy_addr,
 				base_addr->vir_addr, base_addr->size);
 		}
@@ -368,7 +368,7 @@ static int consys_reg_deinit(void)
 
 	for (i = 0; i < CONSYS_BASE_ADDR_MAX; i++) {
 		if (conn_reg_mt6895.reg_base_addr[i].vir_addr) {
-			pr_info("[%d] Unmap %s (0x%zx)",
+			pr_debug("[%d] Unmap %s (0x%zx)",
 				i, consys_base_addr_index_to_str[i],
 				conn_reg_mt6895.reg_base_addr[i].vir_addr);
 			iounmap((void __iomem*)conn_reg_mt6895.reg_base_addr[i].vir_addr);
