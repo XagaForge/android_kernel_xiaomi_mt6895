@@ -164,14 +164,14 @@ static int lcm_panel_vddi_enable(struct device *dev)
 	int ret = 0;
 	int retval = 0;
 	int status = 0;
-	pr_info("%s +\n",__func__);
+	pr_debug("%s +\n",__func__);
 	/* set voltage with min & max*/
 	ret = regulator_set_voltage(disp_vddi, 1800000, 1800000);
 	if (ret < 0)
 		pr_err("set voltage disp_vddi fail, ret = %d\n", ret);
 	retval |= ret;
 	status = regulator_is_enabled(disp_vddi);
-	pr_info("%s regulator_is_enabled = %d, vrf18_start_up = %d\n", __func__, status, vrf18_start_up);
+	pr_debug("%s regulator_is_enabled = %d, vrf18_start_up = %d\n", __func__, status, vrf18_start_up);
 	if (!status || vrf18_start_up){
 		/* enable regulator */
 		ret = regulator_enable(disp_vddi);
@@ -180,7 +180,7 @@ static int lcm_panel_vddi_enable(struct device *dev)
 		vrf18_start_up = 0;
 		retval |= ret;
 	}
-	pr_info("%s -\n",__func__);
+	pr_debug("%s -\n",__func__);
 	return retval;
 }
 static int lcm_panel_vddi_disable(struct device *dev)
@@ -188,16 +188,16 @@ static int lcm_panel_vddi_disable(struct device *dev)
 	int ret = 0;
 	int retval = 0;
 	int status = 0;
-	pr_info("%s +\n",__func__);
+	pr_debug("%s +\n",__func__);
 	status = regulator_is_enabled(disp_vddi);
-	pr_info("%s regulator_is_enabled = %d\n", __func__, status);
+	pr_debug("%s regulator_is_enabled = %d\n", __func__, status);
 	if (status){
 		ret = regulator_disable(disp_vddi);
 		if (ret < 0)
 			pr_err("disable regulator disp_vddi fail, ret = %d\n", ret);
 	}
 	retval |= ret;
-	pr_info("%s -\n",__func__);
+	pr_debug("%s -\n",__func__);
 	return retval;
 }
 static struct LCM_setting_table lcm_init_setting[] = {
@@ -301,7 +301,7 @@ static void lcm_panel_init(struct lcm *ctx)
 	usleep_range(10 * 1000, (10 * 1000)+20);
 	devm_gpiod_put(ctx->dev, ctx->reset_gpio);
 	push_table(ctx, lcm_init_setting, sizeof(lcm_init_setting) / sizeof(struct LCM_setting_table));
-	pr_info("%s-\n", __func__);
+	pr_debug("%s-\n", __func__);
 }
 static int lcm_disable(struct drm_panel *panel)
 {
@@ -318,7 +318,7 @@ static int lcm_disable(struct drm_panel *panel)
 static int lcm_unprepare(struct drm_panel *panel)
 {
 	struct lcm *ctx = panel_to_lcm(panel);
-	pr_info("%s+\n", __func__);
+	pr_debug("%s+\n", __func__);
 	if (!ctx->prepared)
 		return 0;
 	push_table(ctx, lcm_suspend_setting, sizeof(lcm_suspend_setting) / sizeof(struct LCM_setting_table));
@@ -376,7 +376,7 @@ static int lcm_prepare(struct drm_panel *panel)
 {
 	struct lcm *ctx = panel_to_lcm(panel);
 	int ret;
-	pr_info("%s+\n", __func__);
+	pr_debug("%s+\n", __func__);
 	if (ctx->prepared)
 		return 0;
 	if (is_tp_doubleclick_enable() == false ||get_panel_dead_flag()) {
@@ -964,7 +964,7 @@ static int mtk_panel_ext_param_set(struct drm_panel *panel,
 	int ret = 0;
 	struct drm_display_mode *m = get_mode_by_id(connector, mode);
 	struct lcm *ctx = panel_to_lcm(panel);
-	pr_info("%s thh drm_mode_vrefresh = %d, m->hdisplay = %d\n",
+	pr_debug("%s thh drm_mode_vrefresh = %d, m->hdisplay = %d\n",
 		__func__, drm_mode_vrefresh(m), m->hdisplay);
 	if (drm_mode_vrefresh(m) == 30)
 		ext->params = &ext_params_30hz;
@@ -989,7 +989,7 @@ static int mtk_panel_ext_param_set(struct drm_panel *panel,
 static void mode_switch_to_144(struct drm_panel *panel)
 {
 	struct lcm *ctx = panel_to_lcm(panel);
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 	lcm_dcs_write_seq_static(ctx, 0xFF, 0x25);
 	lcm_dcs_write_seq_static(ctx, 0xFB, 0x01);
 	lcm_dcs_write_seq_static(ctx, 0x18, 0x20);
@@ -999,7 +999,7 @@ static void mode_switch_to_144(struct drm_panel *panel)
 static void mode_switch_to_120(struct drm_panel *panel)
 {
 	struct lcm *ctx = panel_to_lcm(panel);
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 	lcm_dcs_write_seq_static(ctx, 0xFF, 0x25);
 	lcm_dcs_write_seq_static(ctx, 0xFB, 0x01);
 	lcm_dcs_write_seq_static(ctx, 0x18, 0x21);
@@ -1009,7 +1009,7 @@ static void mode_switch_to_120(struct drm_panel *panel)
 static void mode_switch_to_90(struct drm_panel *panel)
 {
 	struct lcm *ctx = panel_to_lcm(panel);
-	pr_info("%s\n", __func__);
+	pr_debug("%s\n", __func__);
 	lcm_dcs_write_seq_static(ctx, 0xFF, 0x25);
 	lcm_dcs_write_seq_static(ctx, 0xFB, 0x01);
 	lcm_dcs_write_seq_static(ctx, 0x18, 0x22);
@@ -1023,7 +1023,7 @@ static int mode_switch(struct drm_panel *panel,
 	int ret = 0;
 	struct drm_display_mode *m = get_mode_by_id(connector, dst_mode);
 	struct lcm *ctx = panel_to_lcm(panel);
-	pr_info("%s cur_mode = %d dst_mode %d\n", __func__, cur_mode, dst_mode);
+	pr_debug("%s cur_mode = %d dst_mode %d\n", __func__, cur_mode, dst_mode);
 	if (drm_mode_vrefresh(m) == 90) {
 		mode_switch_to_90(panel);
 	} else if (drm_mode_vrefresh(m) == 120) {
@@ -1106,7 +1106,7 @@ int panel_trigger_get_wpinfo(struct drm_panel *panel, char *buf, size_t size)
 		goto DONE1;
 	}
 	for (i = 0; i < 3; i++) {
-		pr_info("read reg value:0x%x--byte:%d,val:0x%02hhx\n",
+		pr_debug("read reg value:0x%x--byte:%d,val:0x%02hhx\n",
 			*(unsigned char *)(cmd_msg->tx_buf[0]), i,
 			*(unsigned char *)(cmd_msg->rx_buf[0] + i));
 	}
@@ -1126,7 +1126,7 @@ DONE1:
 	kfree(cmd_msg->rx_buf[0]);
 DONE2:
 	vfree(cmd_msg);
-	pr_info("%s end -\n", __func__);
+	pr_debug("%s end -\n", __func__);
 	return ret;
 NOMEM:
 	pr_err("%s: memory allocation failed\n", __func__);
@@ -1143,13 +1143,13 @@ int panel_get_wp_info(struct drm_panel *panel, char *buf, size_t size)
 		}
 		ret = snprintf(buf, size, "%02hhx%02hhx%02hhx\n",
 			read_wp_info[0], read_wp_info[1], read_wp_info[2]);
-		pr_info("read maxlum & wp: %02hhx, %02hhx, %02hhx\n",
+		pr_debug("read maxlum & wp: %02hhx, %02hhx, %02hhx\n",
 			read_wp_info[0], read_wp_info[1], read_wp_info[2]);
 	} else {
 		pr_err("failed to parse wp and lux info from cmdline !\n");
 		ret = snprintf(buf, size, "%02hhx%02hhx%02hhx\n",
 			read_wp_info[0], read_wp_info[1], read_wp_info[2]);
-		pr_info("read maxlum & wp: %02hhx, %02hhx, %02hhx\n",
+		pr_debug("read maxlum & wp: %02hhx, %02hhx, %02hhx\n",
 			read_wp_info[0], read_wp_info[1], read_wp_info[2]);
 	}
 	return ret;
@@ -1197,8 +1197,8 @@ static int lcm_led_i2c_reg_op(char *buffer, int op, int count)
 		pr_err("%s,buffer is null\n", __func__);
 		return ret;
 	}
-	pr_info("%s,reg_val is %s reg_addr = %s\n", __func__, buffer, reg_addr);
-	pr_info("pr_info%s,reg_val is %s reg_addr = %s\n", __func__, buffer, reg_addr);
+	pr_debug("%s,reg_val is %s reg_addr = %s\n", __func__, buffer, reg_addr);
+	pr_debug("pr_debug%s,reg_val is %s reg_addr = %s\n", __func__, buffer, reg_addr);
 	if (op == KTZ8863A_REG_READ) {
 		for (i = 0; i < count; i++) {
 			ret = ktz8863a_reg_read_bytes(reg_addr, reg_val);
@@ -1397,21 +1397,21 @@ static int lcm_probe(struct mipi_dsi_device *dsi)
 	struct lcm *ctx;
 	struct device_node *backlight;
 	int ret;
-	pr_info("l16_42_02_0a_dsc_vdo %s+\n", __func__);
+	pr_debug("l16_42_02_0a_dsc_vdo %s+\n", __func__);
 	dsi_node = of_get_parent(dev->of_node);
 	if (dsi_node) {
 		endpoint = of_graph_get_next_endpoint(dsi_node, NULL);
 		if (endpoint) {
 			remote_node = of_graph_get_remote_port_parent(endpoint);
 			if (!remote_node) {
-				pr_info("No panel connected,skip probe lcm\n");
+				pr_debug("No panel connected,skip probe lcm\n");
 				return -ENODEV;
 			}
-			pr_info("device node name:%s\n", remote_node->name);
+			pr_debug("device node name:%s\n", remote_node->name);
 		}
 	}
 	if (remote_node != dev->of_node) {
-		pr_info("%s+ skip probe due to not current lcm\n", __func__);
+		pr_debug("%s+ skip probe due to not current lcm\n", __func__);
 		return -ENODEV;
 	}
 	ctx = devm_kzalloc(dev, sizeof(struct lcm), GFP_KERNEL);
@@ -1490,7 +1490,7 @@ static int lcm_probe(struct mipi_dsi_device *dsi)
 	if (ret < 0)
 		return ret;
 #endif
-	pr_info("l16_42_02_0a_dsc_vdo %s-\n", __func__);
+	pr_debug("l16_42_02_0a_dsc_vdo %s-\n", __func__);
 	return ret;
 }
 static int lcm_remove(struct mipi_dsi_device *dsi)
