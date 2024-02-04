@@ -189,9 +189,8 @@ void mtk_common_cal_gpu_utilization(unsigned int *pui32Loading,
 	}
 #endif /* MALI_USE_CSF */
 }
+#endif
 
-#if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && \
-	IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 int (*mtk_common_rate_change_notify_fp)(struct kbase_device *kbdev,
 					       u32 clk_index, u32 clk_rate_hz) = NULL;
 
@@ -204,8 +203,6 @@ void MTKGPUFreq_change_notify(u32 clk_idx, u32 gpufreq)
 	if (mtk_common_rate_change_notify_fp && !IS_ERR_OR_NULL(kbdev))
 		mtk_common_rate_change_notify_fp(kbdev, clk_idx, gpufreq);
 }
-#endif
-#endif
 
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 int mtk_set_core_mask(u64 core_mask)

@@ -7,9 +7,7 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <platform/mtk_platform_common.h>
-#if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 #include "mtk_gpu_dvfs.h"
-#endif
 #include <mtk_gpufreq.h>
 #if IS_ENABLED(CONFIG_MTK_GPU_SWPM_SUPPORT)
 #include <mtk_gpu_power_sspm_ipi.h>
@@ -255,10 +253,11 @@ int mtk_common_device_init(struct kbase_device *kbdev)
 	}
 #endif
 
+	mtk_notify_gpu_freq_change_fp = MTKGPUFreq_change_notify;
+
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 #if IS_ENABLED(CONFIG_MALI_MTK_DVFS_LOADING_MODE)
 	ged_dvfs_cal_gpu_utilization_ex_fp = mtk_common_cal_gpu_utilization_ex;
-	mtk_notify_gpu_freq_change_fp = MTKGPUFreq_change_notify;
 #else
 	ged_dvfs_cal_gpu_utilization_fp = mtk_common_cal_gpu_utilization;
 #endif

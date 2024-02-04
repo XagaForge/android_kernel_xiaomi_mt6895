@@ -2350,9 +2350,6 @@ static int __gpufreq_freq_scale_gpu(unsigned int freq_old, unsigned int freq_new
 	/* because return value is different across the APIs */
 	ret = GPUFREQ_SUCCESS;
 
-	/* notify gpu freq change to DDK  */
-	mtk_notify_gpu_freq_change(0, freq_new);
-
 done:
 	GPUFREQ_TRACE_END();
 
@@ -2466,9 +2463,6 @@ static int __gpufreq_freq_scale_stack(unsigned int freq_old, unsigned int freq_n
 
 	/* because return value is different across the APIs */
 	ret = GPUFREQ_SUCCESS;
-
-	/* notify stack freq change to DDK */
-	mtk_notify_gpu_freq_change(1, freq_new);
 
 done:
 	GPUFREQ_TRACE_END();
