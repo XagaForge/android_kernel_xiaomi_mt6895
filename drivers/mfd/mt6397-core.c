@@ -13,9 +13,11 @@
 #include <linux/mfd/core.h>
 #include <linux/mfd/mt6323/core.h>
 #include <linux/mfd/mt6358/core.h>
+#include <linux/mfd/mt6359p/core.h>
 #include <linux/mfd/mt6397/core.h>
 #include <linux/mfd/mt6323/registers.h>
 #include <linux/mfd/mt6358/registers.h>
+#include <linux/mfd/mt6359p/registers.h>
 #include <linux/mfd/mt6397/registers.h>
 
 #define MT6323_RTC_BASE		0x8000
@@ -40,6 +42,11 @@ static const struct resource mt6358_rtc_resources[] = {
 	DEFINE_RES_IRQ(MT6358_IRQ_RTC),
 };
 
+static const struct resource mt6359p_rtc_resources[] = {
+	DEFINE_RES_MEM(MT6358_RTC_BASE, MT6358_RTC_SIZE),
+	DEFINE_RES_IRQ(MT6359P_IRQ_RTC),
+};
+
 static const struct resource mt6397_rtc_resources[] = {
 	DEFINE_RES_MEM(MT6397_RTC_BASE, MT6397_RTC_SIZE),
 	DEFINE_RES_IRQ(MT6397_IRQ_RTC),
@@ -50,13 +57,54 @@ static const struct resource mt6323_keys_resources[] = {
 	DEFINE_RES_IRQ(MT6323_IRQ_STATUS_FCHRKEY),
 };
 
+static const struct resource mt6359p_keys_resources[] = {
+	DEFINE_RES_IRQ(MT6359P_IRQ_PWRKEY),
+	DEFINE_RES_IRQ(MT6359P_IRQ_HOMEKEY),
+	DEFINE_RES_IRQ(MT6359P_IRQ_PWRKEY_R),
+	DEFINE_RES_IRQ(MT6359P_IRQ_HOMEKEY_R),
+};
 static const struct resource mt6397_keys_resources[] = {
 	DEFINE_RES_IRQ(MT6397_IRQ_PWRKEY),
 	DEFINE_RES_IRQ(MT6397_IRQ_HOMEKEY),
 };
 
+static const struct resource mt6359p_auxadc_resources[] = {
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_AUXADC_IMP, "imp"),
+};
+
+static const struct resource mt6359p_battery_oc_resources[] = {
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_CUR_H, "fg_cur_h"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_CUR_L, "fg_cur_l"),
+};
+
+static const struct resource mt6359p_lbat_service_resources[] = {
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_BAT_H, "bat_h"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_BAT_L, "bat_l"),
+};
+
 static const struct resource mt6323_pwrc_resources[] = {
 	DEFINE_RES_MEM(MT6323_PWRC_BASE, MT6323_PWRC_SIZE),
+};
+
+static const struct resource mt6359p_gauge_resources[] = {
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_BAT_H, "COULOMB_H"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_BAT_L, "COULOMB_L"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_BAT2_H, "VBAT_H"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_BAT2_L, "VBAT_L"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_NAG_C_DLTV, "NAFG"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_BATON_BAT_OU, "BAT_OUT"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_ZCV, "ZCV"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_N_CHARGE_L, "FG_N_CHARGE_L"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_IAVG_H, "FG_IAVG_H"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_FG_IAVG_L, "FG_IAVG_L"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_BAT_TEMP_H, "BAT_TMP_H"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_BAT_TEMP_L, "BAT_TMP_L"),
+};
+
+static const struct resource mt6359p_accdet_resources[] = {
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_ACCDET, "ACCDET_IRQ"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_ACCDET_EINT0, "ACCDET_EINT0"),
+	DEFINE_RES_IRQ_NAMED(MT6359P_IRQ_ACCDET_EINT1, "ACCDET_EINT1"),
 };
 
 static const struct mfd_cell mt6323_devs[] = {
@@ -97,6 +145,63 @@ static const struct mfd_cell mt6358_devs[] = {
 		.name = "mt6358-sound",
 		.of_compatible = "mediatek,mt6358-sound"
 	},
+};
+
+static const struct mfd_cell mt6359p_devs[] = {
+	{
+		.name = "mt-pmic",
+		.of_compatible = "mediatek,mt63xx-debug",
+	}, {
+		.name = "mt6359p-accdet",
+		.of_compatible = "mediatek,mt6359p-accdet",
+		.num_resources = ARRAY_SIZE(mt6359p_accdet_resources),
+		.resources = mt6359p_accdet_resources,
+	}, {
+		.name = "mt635x-auxadc",
+		.of_compatible = "mediatek,mt6359p-auxadc",
+		.num_resources = ARRAY_SIZE(mt6359p_auxadc_resources),
+		.resources = mt6359p_auxadc_resources,
+	}, {
+		.name = "mt6359p-efuse",
+		.of_compatible = "mediatek,mt6359p-efuse",
+	}, {
+		.name = "mt6359p-regulator",
+		.of_compatible = "mediatek,mt6359p-regulator"
+	}, {
+		.name = "mt6359p-rtc",
+		.num_resources = ARRAY_SIZE(mt6359p_rtc_resources),
+		.resources = mt6359p_rtc_resources,
+		.of_compatible = "mediatek,mt6359p-rtc",
+	}, {
+		.name = "mt6359p-gauge",
+		.num_resources = ARRAY_SIZE(mt6359p_gauge_resources),
+		.resources = mt6359p_gauge_resources,
+		.of_compatible = "mediatek,mt6359p-gauge",
+	}, {
+		.name = "mtk-battery-oc-throttling",
+		.of_compatible = "mediatek,mt6359p-battery_oc_throttling",
+		.num_resources = ARRAY_SIZE(mt6359p_battery_oc_resources),
+		.resources = mt6359p_battery_oc_resources,
+	}, {
+		.name = "mtk-dynamic-loading-throttling",
+		.of_compatible = "mediatek,mt6359p-dynamic_loading_throttling",
+	}, {
+		.name = "mtk-lbat_service",
+		.of_compatible = "mediatek,mt6359p-lbat_service",
+		.num_resources = ARRAY_SIZE(mt6359p_lbat_service_resources),
+		.resources = mt6359p_lbat_service_resources,
+	}, {
+		.name = "mtk-pmic-keys",
+		.num_resources = ARRAY_SIZE(mt6359p_keys_resources),
+		.resources = mt6359p_keys_resources,
+		.of_compatible = "mediatek,mt6359p-keys"
+	}, {
+		.name = "mt6359-sound",
+		.of_compatible = "mediatek,mt6359p-sound"
+	}, {
+		.name = "mtk-clock-buffer",
+		.of_compatible = "mediatek,clock_buffer",
+	}
 };
 
 static const struct mfd_cell mt6397_devs[] = {
@@ -146,6 +251,14 @@ static const struct chip_data mt6358_core = {
 	.cid_shift = 8,
 	.cells = mt6358_devs,
 	.cell_size = ARRAY_SIZE(mt6358_devs),
+	.irq_init = mt6358_irq_init,
+};
+
+static const struct chip_data mt6359p_core = {
+	.cid_addr = MT6359P_SWCID,
+	.cid_shift = 8,
+	.cells = mt6359p_devs,
+	.cell_size = ARRAY_SIZE(mt6359p_devs),
 	.irq_init = mt6358_irq_init,
 };
 
@@ -218,6 +331,9 @@ static const struct of_device_id mt6397_of_match[] = {
 	}, {
 		.compatible = "mediatek,mt6358",
 		.data = &mt6358_core,
+	}, {
+		.compatible = "mediatek,mt6359p",
+		.data = &mt6359p_core,
 	}, {
 		.compatible = "mediatek,mt6397",
 		.data = &mt6397_core,
