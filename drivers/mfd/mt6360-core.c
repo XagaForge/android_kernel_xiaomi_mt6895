@@ -15,6 +15,7 @@
 #include <linux/of_platform.h>
 
 #include <linux/mfd/mt6360.h>
+#include <linux/mfd/mt6360-private.h>
 
 /* reg 0 -> 0 ~ 7 */
 #define MT6360_CHG_TREG_EVT		(4)
@@ -228,10 +229,20 @@ static struct regmap_irq_chip mt6360_pmu_irq_chip = {
 	.handle_post_irq = mt6360_pmu_handle_post_irq,
 };
 
-static const struct regmap_config mt6360_pmu_regmap_config = {
+static bool mt6360_is_volatile_reg(struct device *dev, unsigned int reg)
+{
+	if (reg >= MT6360_PMU_CHG_MASK1 && reg <= MT6360_PMU_LDO_MASK2)
+		return false;
+	return true;
+}
+
+static struct regmap_config mt6360_pmu_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.max_register = MT6360_PMU_MAXREG,
+
+	.cache_type = REGCACHE_FLAT,
+	.volatile_reg = mt6360_is_volatile_reg,
 };
 
 static const struct resource mt6360_adc_resources[] = {
@@ -240,12 +251,16 @@ static const struct resource mt6360_adc_resources[] = {
 
 static const struct resource mt6360_chg_resources[] = {
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_TREG_EVT, "chg_treg_evt"),
+	DEFINE_RES_IRQ_NAMED(MT6360_CHG_MIVR_EVT, "chg_mivr_evt"),
 	DEFINE_RES_IRQ_NAMED(MT6360_PWR_RDY_EVT, "pwr_rdy_evt"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_BATSYSUV_EVT, "chg_batsysuv_evt"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_VSYSUV_EVT, "chg_vsysuv_evt"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_VSYSOV_EVT, "chg_vsysov_evt"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_VBATOV_EVT, "chg_vbatov_evt"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_VBUSOV_EVT, "chg_vbusov_evt"),
+	DEFINE_RES_IRQ_NAMED(MT6360_WD_PMU_DET, "wd_pmu_det"),
+	DEFINE_RES_IRQ_NAMED(MT6360_WD_PMU_DONE, "wd_pmu_done"),
+	DEFINE_RES_IRQ_NAMED(MT6360_CHG_TMRI, "chg_tmri"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_AICCMEASL, "chg_aiccmeasl"),
 	DEFINE_RES_IRQ_NAMED(MT6360_WDTMRI, "wdtmri"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_RECHGI, "chg_rechgi"),
@@ -253,6 +268,8 @@ static const struct resource mt6360_chg_resources[] = {
 	DEFINE_RES_IRQ_NAMED(MT6360_CHG_IEOCI, "chg_ieoci"),
 	DEFINE_RES_IRQ_NAMED(MT6360_PUMPX_DONEI, "pumpx_donei"),
 	DEFINE_RES_IRQ_NAMED(MT6360_ATTACH_I, "attach_i"),
+	DEFINE_RES_IRQ_NAMED(MT6360_HVDCP_DET, "hvdcp_det"),
+	DEFINE_RES_IRQ_NAMED(MT6360_DCDTI, "dcdti"),
 	DEFINE_RES_IRQ_NAMED(MT6360_CHRDET_EXT_EVT, "chrdet_ext_evt"),
 };
 
@@ -304,18 +321,20 @@ static const struct mfd_cell mt6360_devs[] = {
 		    NULL, 0, 0, "mediatek,mt6360_ldo"),
 	OF_MFD_CELL("mt6360_tcpc", NULL,
 		    NULL, 0, 0, "mediatek,mt6360_tcpc"),
+	/* debug dev */
+	{ .name = "mt6360_dbg", },
 };
 
 static const unsigned short mt6360_slave_addr[MT6360_SLAVE_MAX] = {
 	MT6360_PMU_SLAVEID,
 	MT6360_PMIC_SLAVEID,
 	MT6360_LDO_SLAVEID,
-	MT6360_TCPC_SLAVEID,
 };
 
 static int mt6360_pmu_probe(struct i2c_client *client)
 {
 	struct mt6360_pmu_data *mpd;
+	struct regmap_config *regmap_config = &mt6360_pmu_regmap_config;
 	unsigned int reg_data;
 	int i, ret;
 
@@ -324,9 +343,11 @@ static int mt6360_pmu_probe(struct i2c_client *client)
 		return -ENOMEM;
 
 	mpd->dev = &client->dev;
+	mutex_init(&mpd->io_lock);
 	i2c_set_clientdata(client, mpd);
 
-	mpd->regmap = devm_regmap_init_i2c(client, &mt6360_pmu_regmap_config);
+	regmap_config->lock_arg = &mpd->io_lock;
+	mpd->regmap = devm_regmap_init_i2c(client, regmap_config);
 	if (IS_ERR(mpd->regmap)) {
 		dev_err(&client->dev, "Failed to register regmap\n");
 		return PTR_ERR(mpd->regmap);
@@ -338,7 +359,7 @@ static int mt6360_pmu_probe(struct i2c_client *client)
 		return ret;
 	}
 
-	mpd->chip_rev = reg_data & CHIP_REV_MASK;
+	mpd->chip_rev = reg_data & CHIP_VEN_MASK;
 	if (mpd->chip_rev != CHIP_VEN_MT6360) {
 		dev_err(&client->dev, "Device not supported\n");
 		return -ENODEV;
@@ -385,7 +406,6 @@ static int __maybe_unused mt6360_pmu_suspend(struct device *dev)
 
 	if (device_may_wakeup(dev))
 		enable_irq_wake(i2c->irq);
-
 	return 0;
 }
 
