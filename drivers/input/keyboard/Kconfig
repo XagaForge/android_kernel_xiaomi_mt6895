@@ -779,6 +779,15 @@ config KEYBOARD_BCM
 	  To compile this driver as a module, choose M here: the
 	  module will be called bcm-keypad.
 
+config KEYBOARD_MTK_KPD
+	tristate "MediaTek Keypad Support"
+	depends on OF && HAVE_CLK
+	help
+	  Say Y here if you want to use the keypad on MediaTek SoCs.
+	  If unsure, say N.
+	  To compile this driver as a module, choose M here: the
+	  module will be called mtk-kpd.
+
 config KEYBOARD_MTK_PMIC
 	tristate "MediaTek PMIC keys support"
 	depends on MFD_MT6397
@@ -786,6 +795,6 @@ config KEYBOARD_MTK_PMIC
 	  Say Y here if you want to use the pmic keys (powerkey/homekey).
 
 	  To compile this driver as a module, choose M here: the
-	  module will be called pmic-keys.
+	  module will be called mtk-pmic-keys.
 
 endif
