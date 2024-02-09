@@ -71,6 +71,10 @@ obj-$(CONFIG_VIDEO_MEDIATEK_VPU)	+= mtk-vpu/
 
 obj-$(CONFIG_VIDEO_MEDIATEK_VCODEC)	+= mtk-vcodec/
 
+obj-$(CONFIG_VB2_MEDIATEK_DMA_CONTIG)	+= mtk-videobuf/
+
+obj-$(CONFIG_VIDEO_MEDIATEK_VCU)	+= mtk-vcu/
+
 obj-$(CONFIG_VIDEO_MEDIATEK_MDP)	+= mtk-mdp/
 
 obj-$(CONFIG_VIDEO_MEDIATEK_JPEG)	+= mtk-jpeg/
@@ -80,3 +84,12 @@ obj-$(CONFIG_VIDEO_QCOM_CAMSS)		+= qcom/camss/
 obj-$(CONFIG_VIDEO_QCOM_VENUS)		+= qcom/venus/
 
 obj-y					+= sunxi/
+
+obj-y					+= mtk-isp/
+
+obj-$(CONFIG_MTK_CAMERA_FD_ISP7)	+= mtk-aie/
+
+subdir-ccflags-y += -D__XIAOMI_CAMERA__
+ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"daumier")
+subdir-ccflags-y += -DDAUMIER_CAM
+endif
