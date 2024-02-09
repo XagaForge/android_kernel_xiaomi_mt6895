@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0
 
+config MTK_PLATFORM
+	string "MTK platform name"
+
 menu "Power, PMIC, Battery & Low Power"
 source "drivers/misc/mediatek/clkbuf/Kconfig"
 source "drivers/misc/mediatek/slbc/Kconfig"
