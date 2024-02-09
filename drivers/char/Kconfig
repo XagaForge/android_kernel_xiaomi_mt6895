@@ -459,6 +459,8 @@ source "drivers/s390/char/Kconfig"
 
 source "drivers/char/xillybus/Kconfig"
 
+source "drivers/char/rpmb/Kconfig"
+
 config ADI
 	tristate "SPARC Privileged ADI driver"
 	depends on SPARC64
@@ -470,6 +472,12 @@ config ADI
 	  This feature is also known as MCD (Memory Corruption Detection)
 	  and SSM (Silicon Secured Memory).  Intended consumers of this
 	  driver include crash and makedumpfile.
+
+config XLOGCHAR
+	tristate "xlogchar driver"
+	default m
+	help
+	  Implements a high performance log driver
 
 config RANDOM_TRUST_CPU
 	bool "Initialize RNG using CPU RNG instructions"
