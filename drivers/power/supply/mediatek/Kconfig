@@ -64,6 +64,7 @@ config MTK_CHARGER
 	  maintains charging status.
 	  Say no if not using MediaTek charging driver.
 
+if !TARGET_PRODUCT_PLATO
 config XMUSB350_CHARGER_DET
 	tristate "xmusb350 qc charger type detect"
 	help
@@ -105,6 +106,7 @@ config XM_QC_MANAGER
 	help
 	  Say yes here to enable qc_cp_manager contral qc adapter charging driver.
 	  Say no if not using qc_cp_manager contral qc adapter charging driver.
+endif
 
 config MTK_PUMP_EXPRESS_PLUS_SUPPORT
 	tristate "MediaTek PUMP EXPRESS PLUS"
