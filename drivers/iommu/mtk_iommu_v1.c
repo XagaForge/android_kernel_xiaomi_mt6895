@@ -20,6 +20,7 @@
 #include <linux/iommu.h>
 #include <linux/iopoll.h>
 #include <linux/list.h>
+#include <linux/module.h>
 #include <linux/of_address.h>
 #include <linux/of_iommu.h>
 #include <linux/of_irq.h>
@@ -618,34 +619,18 @@ static int mtk_iommu_probe(struct platform_device *pdev)
 	ret = iommu_device_sysfs_add(&data->iommu, &pdev->dev, NULL,
 				     dev_name(&pdev->dev));
 	if (ret)
-		goto out_clk_unprepare;
+		return ret;
 
 	iommu_device_set_ops(&data->iommu, &mtk_iommu_ops);
 
 	ret = iommu_device_register(&data->iommu);
 	if (ret)
-		goto out_sysfs_remove;
+		return ret;
 
-	if (!iommu_present(&platform_bus_type)) {
-		ret = bus_set_iommu(&platform_bus_type,  &mtk_iommu_ops);
-		if (ret)
-			goto out_dev_unreg;
-	}
+	if (!iommu_present(&platform_bus_type))
+		bus_set_iommu(&platform_bus_type,  &mtk_iommu_ops);
 
-	ret = component_master_add_with_match(dev, &mtk_iommu_com_ops, match);
-	if (ret)
-		goto out_bus_set_null;
-	return ret;
-
-out_bus_set_null:
-	bus_set_iommu(&platform_bus_type, NULL);
-out_dev_unreg:
-	iommu_device_unregister(&data->iommu);
-out_sysfs_remove:
-	iommu_device_sysfs_remove(&data->iommu);
-out_clk_unprepare:
-	clk_disable_unprepare(data->bclk);
-	return ret;
+	return component_master_add_with_match(dev, &mtk_iommu_com_ops, match);
 }
 
 static int mtk_iommu_remove(struct platform_device *pdev)
@@ -707,9 +692,10 @@ static struct platform_driver mtk_iommu_driver = {
 		.pm = &mtk_iommu_pm_ops,
 	}
 };
+module_platform_driver(mtk_iommu_driver);
 
-static int __init m4u_init(void)
-{
-	return platform_driver_register(&mtk_iommu_driver);
-}
-subsys_initcall(m4u_init);
+MODULE_DESCRIPTION("IOMMU API for MediaTek M4U v1 implementations");
+MODULE_AUTHOR("Yong Wu <yong.wu@mediatek.com>");
+MODULE_AUTHOR("Honghui Zhang <honghui.zhang@mediatek.com>");
+MODULE_ALIAS("platform:MediaTek-M4U-v1");
+MODULE_LICENSE("GPL v2");
