@@ -6,8 +6,6 @@
 #include <linux/kernel.h>
 #include <mt-plat/mtk_gpu_utility.h>
 
-#include <mt-plat/fpsgo_common.h>
-
 #include "ged_base.h"
 #include "ged_bridge.h"
 #include "ged_log.h"
@@ -171,9 +169,6 @@ int ged_bridge_gpu_hint_to_cpu(
 		struct GED_BRIDGE_OUT_GPU_HINT_TO_CPU *out)
 {
 	int ret = 0;
-#ifdef CONFIG_MTK_FPSGO_V3
-	ret = fpsgo_notify_gpu_block(in->tid, in->i32BridgeFD, in->hint);
-#endif
 	out->eError = GED_OK;
 	out->boost_flag = ret;
 	out->boost_value = ged_dvfs_boost_value();
