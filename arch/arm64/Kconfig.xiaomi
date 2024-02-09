@@ -23,3 +23,8 @@ config TARGET_PRODUCT_XAGA
 	default n
 	help
 	Product Name Xaga.
+
+config BUILD_XIAOMI_CAMERA_IMAGE_NAMES
+	string "Xiaomi Camera Image Names"
+	help
+	For Camera to distinguish project names.
