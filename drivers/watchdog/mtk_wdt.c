@@ -50,12 +50,23 @@
 
 #define WDT_SWSYSRST		0x18U
 #define WDT_SWSYS_RST_KEY	0x88000000
+#define WDT_LATCH_CTL2		0x48
+#define WDT_DFD_EN		(1 << 17)
+#define WDT_DFD_THERMAL1_DIS	(1 << 18)
+#define WDT_DFD_THERMAL2_DIS	(1 << 19)
+#define WDT_DFD_TIMEOUT_MASK	0x1FFFF
+#define WDT_LATCH_CTL2_KEY	0x95000000
 
 #define DRV_NAME		"mtk-wdt"
 #define DRV_VERSION		"1.0"
 
 static bool nowayout = WATCHDOG_NOWAYOUT;
 static unsigned int timeout;
+
+static int mtk_wdt_set_timeout(struct watchdog_device *wdt_dev,
+			       unsigned int timeout);
+static int mtk_wdt_start(struct watchdog_device *wdt_dev);
+static int mtk_wdt_stop(struct watchdog_device *wdt_dev);
 
 struct mtk_wdt_dev {
 	struct watchdog_device wdt_dev;
@@ -148,6 +159,50 @@ static int toprgu_register_reset_controller(struct platform_device *pdev,
 	return ret;
 }
 
+static void mtk_wdt_parse_dt(struct device_node *np,
+				struct watchdog_device *wdt_dev)
+{
+	struct mtk_wdt_dev *mtk_wdt = watchdog_get_drvdata(wdt_dev);
+	void __iomem *wdt_base;
+	int ret = 0;
+	unsigned int reg = 0, tmp = 0, dfd_timeout = 0;
+
+	if (!np || !mtk_wdt)
+		return;
+
+	ret = of_property_read_u32(np, "mediatek,rg_dfd_timeout",
+					&dfd_timeout);
+
+	wdt_base = mtk_wdt->wdt_base;
+	if (wdt_base && !ret) {
+		tmp = dfd_timeout & WDT_DFD_TIMEOUT_MASK;
+
+		/* enable dfd_en and setup timeout */
+		reg = readl(wdt_base + WDT_LATCH_CTL2);
+		reg &= ~(WDT_DFD_THERMAL2_DIS | WDT_DFD_TIMEOUT_MASK);
+		reg |= (WDT_DFD_EN | WDT_DFD_THERMAL1_DIS |
+			WDT_LATCH_CTL2_KEY | tmp);
+		writel(reg, wdt_base + WDT_LATCH_CTL2);
+	}
+}
+
+static void mtk_wdt_init(struct device_node *np,
+			struct watchdog_device *wdt_dev)
+{
+	struct mtk_wdt_dev *mtk_wdt = watchdog_get_drvdata(wdt_dev);
+	void __iomem *wdt_base;
+
+	wdt_base = mtk_wdt->wdt_base;
+
+	if (np)
+		mtk_wdt_parse_dt(np, wdt_dev);
+
+	if (readl(wdt_base + WDT_MODE) & WDT_MODE_EN) {
+		set_bit(WDOG_HW_RUNNING, &wdt_dev->status);
+		mtk_wdt_set_timeout(wdt_dev, wdt_dev->timeout);
+	}
+}
+
 static int mtk_wdt_restart(struct watchdog_device *wdt_dev,
 			   unsigned long action, void *data)
 {
@@ -176,6 +231,7 @@ static int mtk_wdt_ping(struct watchdog_device *wdt_dev)
 	void __iomem *wdt_base = mtk_wdt->wdt_base;
 
 	iowrite32(WDT_RST_RELOAD, wdt_base + WDT_RST);
+	pr_info("[wdtk] kick watchdog\n");
 
 	return 0;
 }
@@ -212,6 +268,8 @@ static int mtk_wdt_stop(struct watchdog_device *wdt_dev)
 	reg |= WDT_MODE_KEY;
 	iowrite32(reg, wdt_base + WDT_MODE);
 
+	clear_bit(WDOG_HW_RUNNING, &wdt_dev->status);
+
 	return 0;
 }
 
@@ -227,9 +285,10 @@ static int mtk_wdt_start(struct watchdog_device *wdt_dev)
 		return ret;
 
 	reg = ioread32(wdt_base + WDT_MODE);
-	reg &= ~(WDT_MODE_IRQ_EN | WDT_MODE_DUAL_EN);
 	reg |= (WDT_MODE_EN | WDT_MODE_KEY);
 	iowrite32(reg, wdt_base + WDT_MODE);
+
+	set_bit(WDOG_HW_RUNNING, &wdt_dev->status);
 
 	return 0;
 }
@@ -270,7 +329,7 @@ static int mtk_wdt_probe(struct platform_device *pdev)
 	mtk_wdt->wdt_dev.info = &mtk_wdt_info;
 	mtk_wdt->wdt_dev.ops = &mtk_wdt_ops;
 	mtk_wdt->wdt_dev.timeout = WDT_MAX_TIMEOUT;
-	mtk_wdt->wdt_dev.max_timeout = WDT_MAX_TIMEOUT;
+	mtk_wdt->wdt_dev.max_hw_heartbeat_ms = WDT_MAX_TIMEOUT * 1000;
 	mtk_wdt->wdt_dev.min_timeout = WDT_MIN_TIMEOUT;
 	mtk_wdt->wdt_dev.parent = dev;
 
@@ -280,7 +339,7 @@ static int mtk_wdt_probe(struct platform_device *pdev)
 
 	watchdog_set_drvdata(&mtk_wdt->wdt_dev, mtk_wdt);
 
-	mtk_wdt_stop(&mtk_wdt->wdt_dev);
+	mtk_wdt_init(pdev->dev.of_node, &mtk_wdt->wdt_dev);
 
 	watchdog_stop_on_reboot(&mtk_wdt->wdt_dev);
 	err = devm_watchdog_register_device(dev, &mtk_wdt->wdt_dev);
@@ -300,7 +359,7 @@ static int mtk_wdt_probe(struct platform_device *pdev)
 	return 0;
 }
 
-#ifdef CONFIG_PM_SLEEP
+#if defined(CONFIG_PM_SLEEP) && defined(CONFIG_MEDIATEK_WATCHDOG_PM)
 static int mtk_wdt_suspend(struct device *dev)
 {
 	struct mtk_wdt_dev *mtk_wdt = dev_get_drvdata(dev);
@@ -322,6 +381,11 @@ static int mtk_wdt_resume(struct device *dev)
 
 	return 0;
 }
+
+static const struct dev_pm_ops mtk_wdt_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(mtk_wdt_suspend,
+				mtk_wdt_resume)
+};
 #endif
 
 static const struct of_device_id mtk_wdt_dt_ids[] = {
@@ -332,16 +396,13 @@ static const struct of_device_id mtk_wdt_dt_ids[] = {
 };
 MODULE_DEVICE_TABLE(of, mtk_wdt_dt_ids);
 
-static const struct dev_pm_ops mtk_wdt_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(mtk_wdt_suspend,
-				mtk_wdt_resume)
-};
-
 static struct platform_driver mtk_wdt_driver = {
 	.probe		= mtk_wdt_probe,
 	.driver		= {
 		.name		= DRV_NAME,
+#if defined(CONFIG_PM_SLEEP) && defined(CONFIG_MEDIATEK_WATCHDOG_PM)
 		.pm		= &mtk_wdt_pm_ops,
+#endif
 		.of_match_table	= mtk_wdt_dt_ids,
 	},
 };
