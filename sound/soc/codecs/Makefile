@@ -1,4 +1,13 @@
 # SPDX-License-Identifier: GPL-2.0
+
+ifneq ($(CONFIG_MTK_TINYSYS_SCP_SUPPORT),)
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/scp/include
+endif
+
+ifneq ($(CONFIG_SND_SOC_MEDIATEK),)
+ccflags-y += -I$(srctree)/sound/soc/mediatek/common
+endif
+
 snd-soc-88pm860x-objs := 88pm860x-codec.o
 snd-soc-ab8500-codec-objs := ab8500-codec.o
 snd-soc-ac97-objs := ac97.o
@@ -125,10 +134,14 @@ snd-soc-mc13783-objs := mc13783.o
 snd-soc-ml26124-objs := ml26124.o
 snd-soc-msm8916-analog-objs := msm8916-wcd-analog.o
 snd-soc-msm8916-digital-objs := msm8916-wcd-digital.o
+snd-soc-mt6338-objs := mt6338.o
 snd-soc-mt6351-objs := mt6351.o
 snd-soc-mt6358-objs := mt6358.o
 snd-soc-mt6359-objs := mt6359.o
 snd-soc-mt6660-objs := mt6660.o
+snd-soc-mt6359-objs := mt6359.o
+snd-soc-mt6368-objs := mt6368.o
+snd-soc-mt6369-objs := mt6369.o
 snd-soc-nau8540-objs := nau8540.o
 snd-soc-nau8810-objs := nau8810.o
 snd-soc-nau8822-objs := nau8822.o
@@ -238,7 +251,7 @@ snd-soc-uda1380-objs := uda1380.o
 snd-soc-wcd9335-objs := wcd-clsh-v2.o wcd9335.o
 snd-soc-wcd934x-objs := wcd-clsh-v2.o wcd934x.o
 snd-soc-wl1273-objs := wl1273.o
-snd-soc-wm-adsp-objs := wm_adsp.o
+#snd-soc-wm-adsp-objs := wm_adsp.o
 snd-soc-wm0010-objs := wm0010.o
 snd-soc-wm1250-ev1-objs := wm1250-ev1.o
 snd-soc-wm2000-objs := wm2000.o
@@ -434,10 +447,19 @@ obj-$(CONFIG_SND_SOC_MC13783)	+= snd-soc-mc13783.o
 obj-$(CONFIG_SND_SOC_ML26124)	+= snd-soc-ml26124.o
 obj-$(CONFIG_SND_SOC_MSM8916_WCD_ANALOG) +=snd-soc-msm8916-analog.o
 obj-$(CONFIG_SND_SOC_MSM8916_WCD_DIGITAL) +=snd-soc-msm8916-digital.o
+obj-$(CONFIG_SND_SOC_MT6338)	+= snd-soc-mt6338.o
+obj-$(CONFIG_SND_SOC_MT6338_ACCDET) += mt6338-accdet.o
 obj-$(CONFIG_SND_SOC_MT6351)	+= snd-soc-mt6351.o
 obj-$(CONFIG_SND_SOC_MT6358)	+= snd-soc-mt6358.o
 obj-$(CONFIG_SND_SOC_MT6359)	+= snd-soc-mt6359.o
 obj-$(CONFIG_SND_SOC_MT6660)	+= snd-soc-mt6660.o
+obj-$(CONFIG_SND_SOC_MT6359)	+= snd-soc-mt6359.o
+obj-$(CONFIG_SND_SOC_MT6359P)	+= snd-soc-mt6359.o
+obj-$(CONFIG_SND_SOC_MT6368)	+= snd-soc-mt6368.o
+obj-$(CONFIG_SND_SOC_MT6369)	+= snd-soc-mt6369.o
+obj-$(CONFIG_SND_SOC_MT6359P_ACCDET) += mt6359p-accdet.o
+obj-$(CONFIG_SND_SOC_MT6368_ACCDET) += mt6368-accdet.o
+obj-$(CONFIG_SND_SOC_MT6369_ACCDET) += mt6369-accdet.o
 obj-$(CONFIG_SND_SOC_NAU8540)   += snd-soc-nau8540.o
 obj-$(CONFIG_SND_SOC_NAU8810)   += snd-soc-nau8810.o
 obj-$(CONFIG_SND_SOC_NAU8822)   += snd-soc-nau8822.o
@@ -476,6 +498,7 @@ obj-$(CONFIG_SND_SOC_RT1308_SDW)	+= snd-soc-rt1308-sdw.o
 obj-$(CONFIG_SND_SOC_RT274)	+= snd-soc-rt274.o
 obj-$(CONFIG_SND_SOC_RT286)	+= snd-soc-rt286.o
 obj-$(CONFIG_SND_SOC_RT298)	+= snd-soc-rt298.o
+obj-$(CONFIG_SND_SOC_RT5512)	+= richtek/
 obj-$(CONFIG_SND_SOC_RT5514)	+= snd-soc-rt5514.o
 obj-$(CONFIG_SND_SOC_RT5514_SPI)	+= snd-soc-rt5514-spi.o
 obj-$(CONFIG_SND_SOC_RT5514_SPI_BUILTIN)	+= snd-soc-rt5514-spi.o
@@ -525,6 +548,10 @@ obj-$(CONFIG_SND_SOC_TAS5720)	+= snd-soc-tas5720.o
 obj-$(CONFIG_SND_SOC_TAS6424)	+= snd-soc-tas6424.o
 obj-$(CONFIG_SND_SOC_TDA7419)	+= snd-soc-tda7419.o
 obj-$(CONFIG_SND_SOC_TAS2770) += snd-soc-tas2770.o
+obj-$(CONFIG_SND_SOC_TFA9874)	+= tfa98xx/
+obj-$(CONFIG_SND_SOC_CS35L41)	+= cs35l41/
+obj-$(CONFIG_SND_SOC_AA006)	+= aa006/
+obj-$(CONFIG_SND_SOC_BB007)	+= bb007/
 obj-$(CONFIG_SND_SOC_TFA9879)	+= snd-soc-tfa9879.o
 obj-$(CONFIG_SND_SOC_TLV320AIC23)	+= snd-soc-tlv320aic23.o
 obj-$(CONFIG_SND_SOC_TLV320AIC23_I2C)	+= snd-soc-tlv320aic23-i2c.o
@@ -607,6 +634,12 @@ obj-$(CONFIG_SND_SOC_WM_HUBS)	+= snd-soc-wm-hubs.o
 obj-$(CONFIG_SND_SOC_WSA881X)	+= snd-soc-wsa881x.o
 obj-$(CONFIG_SND_SOC_ZL38060)	+= snd-soc-zl38060.o
 obj-$(CONFIG_SND_SOC_ZX_AUD96P22) += snd-soc-zx-aud96p22.o
+
+#for AWINIC AW882XX Smart PA
+obj-$(CONFIG_SND_SMARTPA_AW882XX)	+= aw882xx/
+
+#for AWINIC AW882XX Smart PA
+obj-$(CONFIG_SND_SMARTPA_AW882XX_V11)	+= aw882xxV11/
 
 # Amp
 obj-$(CONFIG_SND_SOC_MAX9877)	+= snd-soc-max9877.o
