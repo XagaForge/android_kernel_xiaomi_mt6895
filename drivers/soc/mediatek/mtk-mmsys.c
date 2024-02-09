@@ -5,6 +5,7 @@
  */
 
 #include <linux/device.h>
+#include <linux/module.h>
 #include <linux/io.h>
 #include <linux/of_device.h>
 #include <linux/platform_device.h>
@@ -373,4 +374,8 @@ static struct platform_driver mtk_mmsys_drv = {
 	.probe = mtk_mmsys_probe,
 };
 
-builtin_platform_driver(mtk_mmsys_drv);
+module_platform_driver(mtk_mmsys_drv);
+
+MODULE_AUTHOR("Yongqiang Niu, MediaTek");
+MODULE_DESCRIPTION("MediaTek MMSYS Driver");
+MODULE_LICENSE("GPL v2");
