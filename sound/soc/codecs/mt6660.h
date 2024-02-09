@@ -25,6 +25,7 @@ struct mt6660_chip {
 	struct mutex io_lock;
 	struct regmap *regmap;
 	u16 chip_rev;
+	u8 dev_cnt;
 };
 #pragma pack(pop)
 
@@ -73,5 +74,9 @@ struct mt6660_chip {
 #define MT6660_REG_RESV23		(0xBD)
 #define MT6660_REG_RESV31		(0xD3)
 #define MT6660_REG_RESV40		(0xE0)
+
+/* Export function */
+int mt6660_i2c_probe(struct i2c_client *client, const struct i2c_device_id *id);
+int mt6660_i2c_remove(struct i2c_client *client);
 
 #endif /* __SND_SOC_MT6660_H */
