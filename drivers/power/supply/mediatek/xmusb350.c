@@ -700,11 +700,6 @@ static void xmusb350_irq_handler(struct work_struct *work)
 		goto done;
 	}
 
-#ifdef CONFIG_FACTORY_BUILD
-	if (!chip->attach && (data[0] == XMUSB350_TYPE_SDP || data[0] == XMUSB350_TYPE_CDP))
-		chip->attach = true;
-#endif
-
 	if (chip->otg_enable || !chip->attach)
 		goto done;
 
@@ -742,14 +737,12 @@ static void xmusb350_irq_handler(struct work_struct *work)
 		ret = xmusb350_enable_hvdcp(chip, true);
 	}
 
-#ifndef CONFIG_FACTORY_BUILD
 	if (xmusb_type == XMUSB350_TYPE_HVDCP_3) {
 		chip->qc3_ab_done = false;
 		if (!chip->check_hvdcp3_wakelock->active)
 			__pm_stay_awake(chip->check_hvdcp3_wakelock);
 		schedule_delayed_work(&chip->check_hvdcp3_work, 0);
 	}
-#endif
 
 update_type:
 	ret = xmusb350_update_chgtype(chip, xmusb_type);

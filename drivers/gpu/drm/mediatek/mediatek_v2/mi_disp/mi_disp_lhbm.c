@@ -488,10 +488,6 @@ int mi_disp_set_local_hbm(int disp_id, int lhbm_value)
 	unsigned long flags;
 	int rc = 0;
 
-#ifdef CONFIG_FACTORY_BUILD
-	return 0;
-#endif
-
 	if (!is_local_hbm(disp_id)) {
 		DISP_DEBUG("%s panel is not local hbm\n", get_disp_id_name(disp_id));
 		return 0;
@@ -540,10 +536,6 @@ int mi_disp_set_fod_queue_work(u32 fod_status, bool from_touch)
 	struct lhbm_fod_event *fod_event = NULL, *entry = NULL;
 	unsigned long flags;
 	int rc = 0;
-
-#ifdef CONFIG_FACTORY_BUILD
-	return 0;
-#endif
 
 	if (from_touch) {
 		if (fod_status == atomic_read(&mi_disp_fod_status)) {

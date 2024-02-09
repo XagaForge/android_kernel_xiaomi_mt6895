@@ -14,21 +14,11 @@
 #define MEDIUM_IBUS_DIFF	500
 #define LARGE_VBUS_DIFF		800
 #define MEDIUM_VBUS_DIFF	400
-#ifdef CONFIG_FACTORY_BUILD
-#define MAX_CABLE_RESISTANCE	550
-#else
 #define MAX_CABLE_RESISTANCE	350
-#endif
 
-#ifdef CONFIG_FACTORY_BUILD
-#define LARGE_STEP		8
-#define MEDIUM_STEP		3
-#define SMALL_STEP		1
-#else
 #define LARGE_STEP		5
 #define MEDIUM_STEP		2
 #define SMALL_STEP		1
-#endif
 
 #define PDM_BBC_ICL		100
 #define LOW_POWER_PD2_VINMIN 	4700

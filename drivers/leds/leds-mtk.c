@@ -350,27 +350,16 @@ int mt_leds_parse_dt(struct mt_led_data *mdev, struct fwnode_handle *fwnode)
 		mdev->conf.cdev.default_trigger = NULL;
 	}
 
-#ifdef CONFIG_FACTORY_BUILD
 	ret = fwnode_property_read_u32(fwnode,
-		"factory-max-brightness", &(mdev->conf.cdev.max_brightness));
-
-	if (ret)
-#endif
-		ret = fwnode_property_read_u32(fwnode,
-			"max-brightness", &(mdev->conf.cdev.max_brightness));
+		"max-brightness", &(mdev->conf.cdev.max_brightness));
 
 	if (ret) {
 		pr_info("No max-brightness, use default value 255");
 			mdev->conf.cdev.max_brightness = 255;
 	}
 
-#ifdef CONFIG_FACTORY_BUILD
 	ret = fwnode_property_read_u32(fwnode,
-		"factory-max-hw-brightness", &(mdev->conf.max_hw_brightness));
-	if (ret)
-#endif
-		ret = fwnode_property_read_u32(fwnode,
-			"max-hw-brightness", &(mdev->conf.max_hw_brightness));
+		"max-hw-brightness", &(mdev->conf.max_hw_brightness));
 
 	if (ret) {
 		pr_info("No max-hw-brightness, use default value 1023");

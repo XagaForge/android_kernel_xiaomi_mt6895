@@ -31,7 +31,6 @@ config MTK_DRE30_SUPPORT
 
 config MTK_ROUND_CORNER_SUPPORT
 	bool "enable medietak display round corner"
-	depends on !FACTORY_BUILD
 	default n
 	help
 	  define CONFIG_MTK_ROUND_CORNER_SUPPORT to enable Mediatek Round Corner on display.

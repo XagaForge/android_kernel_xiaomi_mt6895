@@ -1372,10 +1372,7 @@ static int pd_policy_parse_dt(struct usbpd_pm *pdpm)
 	pdpm->vbus_control_gpio = of_get_named_gpio(node, "mt6375_control_gpio", 0);
 	if (!gpio_is_valid(pdpm->vbus_control_gpio))
 		pdm_err("failed to parse vbus_control_gpio\n");
-#ifdef CONFIG_FACTORY_BUILD
-	vbus_low_gap_div += 200;
-	vbus_high_gap_div += 200;
-#endif
+
 	pdm_info("parse config, FV = %d, FV_FFC = %d, FCC = [%d %d %d], MAX_VBUS = %d, MAX_IBUS = %d, CV = [%d %d %d %d], ENTRY = [%d %d %d %d %d], PDO_GAP = [%d %d %d %d]\n",
 			pdpm->dts_config.fv, pdpm->dts_config.fv_ffc, pdpm->dts_config.max_fcc, pdpm->dts_config.fcc_low_hyst, pdpm->dts_config.fcc_high_hyst,
 			pdpm->dts_config.max_vbus, pdpm->dts_config.max_ibus, pdpm->dts_config.cv_vbat, pdpm->dts_config.cv_vbat_ffc, pdpm->dts_config.cv_ibat, pdpm->dts_config.cv_ibat_warm,

@@ -55,12 +55,8 @@ static DEFINE_MUTEX(g_cali_lock);
 
 #ifdef AW_CALI_STORE_EXAMPLE
  /*write cali to persist file example*/
-#ifdef CONFIG_FACTORY_BUILD
-#define AWINIC_CALI_FILE  "/mnt/vendor/persist/factory/audio/aw_cali.bin"
-#else
 #define AWINIC_CALI_FILE_WRITE  "/data/vendor/cit/aw_cali.bin"
 #define AWINIC_CALI_FILE_READ  "/mnt/vendor/persist/factory/audio/aw_cali.bin"
-#endif
 #define AW_INT_DEC_DIGIT 10
 
 static void aw_fs_read(struct file *file, char *buf, size_t count, loff_t *pos)
@@ -84,19 +80,11 @@ static int aw_cali_write_cali_re_to_file(int32_t cali_re, int channel)
 	char buf[50] = {0};
 	loff_t pos = 0;
 	mm_segment_t fs;
-#ifdef CONFIG_FACTORY_BUILD
-	fp = filp_open(AWINIC_CALI_FILE, O_RDWR | O_CREAT, 0644);
-	if (IS_ERR(fp)) {
-		pr_err("%s:channel:%d open %s failed!\n",
-		__func__, channel, AWINIC_CALI_FILE);
-		return -EINVAL;
-#else
 	fp = filp_open(AWINIC_CALI_FILE_WRITE, O_RDWR | O_CREAT, 0644);
 	if (IS_ERR(fp)) {
 		pr_err("%s:channel:%d open %s failed!\n",
 		__func__, channel, AWINIC_CALI_FILE_WRITE);
 		return -EINVAL;
-#endif
 	}
 
 	pos = AW_INT_DEC_DIGIT * channel;
@@ -132,19 +120,11 @@ static int aw_cali_get_read_cali_re(int32_t *cali_re, int channel)
 	loff_t pos = 0;
 	mm_segment_t fs;
 
-#ifdef CONFIG_FACTORY_BUILD
-	fp = filp_open(AWINIC_CALI_FILE, O_RDONLY, 0);
-	if (IS_ERR(fp)) {
-		pr_err("%s:channel:%d open %s failed!\n",
-			__func__, channel, AWINIC_CALI_FILE);
-		return -EINVAL;
-#else
 	fp = filp_open(AWINIC_CALI_FILE_READ, O_RDONLY, 0);
 	if (IS_ERR(fp)) {
 		pr_err("%s:channel:%d open %s failed!\n",
 			__func__, channel, AWINIC_CALI_FILE_READ);
 		return -EINVAL;
-#endif
 	}
 
 	pos = AW_INT_DEC_DIGIT * channel;
