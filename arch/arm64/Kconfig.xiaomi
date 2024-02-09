@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: GPL-2.0-only
+
+config TARGET_PRODUCT_ARISTOTLE
+    bool "Product Name Aristotle"
+    default n
+    help
+    Product Name Aristotle.
+
+config TARGET_PRODUCT_PLATO
+	bool "Product Name Plato"
+	default n
+	help
+	Product Name Plato.
+
+config TARGET_PRODUCT_RUBENS
+	bool "Product Name Rubens"
+	default n
+	help
+	Product Name Rubens.
+
+config TARGET_PRODUCT_XAGA
+	bool "Product Name Xaga"
+	default n
+	help
+	Product Name Xaga.
