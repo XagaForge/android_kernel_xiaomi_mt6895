@@ -76,39 +76,6 @@ static struct ois_driver_info g_bu24618_driver_info = {
 
 static bool ois_streamon = false;
 
-#ifdef CONFIG_FACTORY_BUILD
-/* factory setting */
-struct ois_setting bu24618_init_setting[] = {
-	{0x614F, 0x00, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x6020, 0x01, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x617D, 0x00, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x6023, 0x02, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x602C, 0x70, 0, OP_WRITE},
-	{0x602D, 0x21, 0, OP_WRITE},
-	{0x602C, 0x71, 0, OP_WRITE},
-	{0x602D, 0x00, 0, OP_WRITE},
-	{0x602C, 0x72, 0, OP_WRITE},
-	{0x602D, 0x00, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x602A, 0x00, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x6023, 0x00, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-};
-
-struct ois_setting bu24618_enable_setting[] = {
-	{0x6021, 0x03, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x6025, 0xD0, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-	{0x6020, 0x02, 0, OP_WRITE},
-	{0x6024, 0x01, 0, OP_POLL },
-};
-#else
 /* miui setting */
 struct ois_setting bu24618_init_setting[] = {
 	{0x614F, 0x00, 0, OP_WRITE},
@@ -149,8 +116,6 @@ struct ois_setting bu24618_enable_setting[] = {
 	{0x6157, 0x09, 0, OP_WRITE},
 	{0x6024, 0x01, 0, OP_POLL },
 };
-#endif
-
 
 struct ois_setting bu24618_disable_setting[] = {
 	{0x6020, 0x01, 0, OP_WRITE},
@@ -322,9 +287,6 @@ static int bu24618_init(struct bu24618_device *bu24618)
 		usleep_range(1000, 1010);
 	}
 
-#ifdef CONFIG_FACTORY_BUILD
-	LOG_INF("is factory\n");
-#endif
 	return 0;
 }
 

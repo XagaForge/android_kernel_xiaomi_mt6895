@@ -935,49 +935,6 @@ static struct LCM_setting_table mode_60hz_setting_gir_off[] = {
 	{REGFLAG_END_OF_TABLE, 0x00, {}}
 };
 
-#ifdef CONFIG_FACTORY_BUILD
-static struct LCM_setting_table doze_enable_h[] = {
-	{0xF0, 06, {0xF0,0x55,0xAA,0x52,0x08,0x00}},
-	{0x6F, 02, {0x6F,0x01}},
-	{0xBE, 02, {0xBE,0x41}},
-	{0xF0, 06, {0xF0,0x55,0xAA,0x52,0x08,0x01}},
-	{0xE4, 02, {0xE4,0x90}},
-	{0x6F, 02, {0x6F,0x0A}},
-	{0xE4, 02, {0xE4,0x90}},
-	{0x51, 07, {0x51,0x07,0xFF,0x07,0xFF,0x03,0xFF}},
-	{0x65, 02, {0x65,0x01}},
-	{0x39, 02, {0x39,0x00}},
-	{0x2C, 02, {0x2C,0x00}},
-};
-static struct LCM_setting_table doze_enable_l[] = {
-	{0xF0, 06, {0xF0,0x55,0xAA,0x52,0x08,0x00}},
-	{0x6F, 02, {0x6F,0x01}},
-	{0xBE, 02, {0xBE,0x41}},
-	{0xF0, 06, {0xF0,0x55,0xAA,0x52,0x08,0x01}},
-	{0xE4, 02, {0xE4,0x90}},
-	{0x6F, 02, {0x6F,0x0A}},
-	{0xE4, 02, {0xE4,0x90}},
-	{0x51, 07, {0x51,0x07,0xFF,0x07,0xFF,0x01,0xFF}},
-	{0x65, 02, {0x65,0x01}},
-	{0x39, 02, {0x39,0x00}},
-	{0x2C, 02, {0x2C,0x00}},
-};
-
-static struct LCM_setting_table doze_disable_t[] = {
-	{0xF0, 06, {0xF0,0x55,0xAA,0x52,0x08,0x01}},
-	{0xE4, 02, {0xE4,0x80}},
-	{0x6F, 02, {0x6F,0x0A}},
-	{0xE4, 02, {0xE4,0x80}},
-	{0x65, 02, {0x65,0x00}},
-	{0x38, 02, {0x38,0x00}},
-	{0x51, 07, {0x51,0x07,0xFF,0x07,0xFF,0x00,0x00}},
-	{0x2C, 02, {0x2C,0x00}},
-	{0xF0, 06, {0xF0,0x55,0xAA,0x52,0x08,0x00}},
-	{0x6F, 02, {0x6F,0x01}},
-	{0xBE, 02, {0xBE,0x45}},
-};
-#endif
-
 static struct LCM_setting_table bl_value_table[] = {
 	{0x51, 03, {0x51,0x00,0x00}},
 };
@@ -1963,18 +1920,6 @@ static int panel_set_doze_brightness(struct drm_panel *panel, int doze_brightnes
 		goto exit;
 	}
 
-#ifdef CONFIG_FACTORY_BUILD
-	if (DOZE_TO_NORMAL == doze_brightness) {
-		mi_disp_panel_ddic_send_cmd(doze_disable_t, ARRAY_SIZE(doze_disable_t), false, false);
-		atomic_set(&doze_enable, 0);
-	} else if (DOZE_BRIGHTNESS_LBM  == doze_brightness) {
-		mi_disp_panel_ddic_send_cmd(doze_enable_l, ARRAY_SIZE(doze_enable_l), false, false);
-	} else if (DOZE_BRIGHTNESS_HBM == doze_brightness) {
-		mi_disp_panel_ddic_send_cmd(doze_enable_h, ARRAY_SIZE(doze_enable_h), false, false);
-	}
-	goto exit;
-#endif
-
 	if (DOZE_TO_NORMAL == doze_brightness) {
 		cmd_msg.type[0] = ARRAY_SIZE(backlight_0) > 2 ? 0x39 : 0x15;
 		cmd_msg.tx_buf[0] = (backlight_0);
@@ -2687,7 +2632,6 @@ err:
 static int panel_doze_enable(struct drm_panel *panel,
 	void *dsi, dcs_write_gce cb, void *handle)
 {
-#ifndef CONFIG_FACTORY_BUILD
 	char esd_off_page1[] = {0xF0,0x55,0xAA,0x52,0x08,0x00};
 	char esd_off_page2[] = {0x6F,0x01};
 	char esd_off_page3[] = {0xBE,0x41};
@@ -2697,7 +2641,7 @@ static int panel_doze_enable(struct drm_panel *panel,
 	cb(dsi, handle, esd_off_page1, ARRAY_SIZE(esd_off_page1));
 	cb(dsi, handle, esd_off_page2, ARRAY_SIZE(esd_off_page2));
 	cb(dsi, handle, esd_off_page3, ARRAY_SIZE(esd_off_page3));
-#endif
+
 	atomic_set(&doze_enable, 1);
 	atomic_set(&lhbm_enable, 0);
 	pr_info("%s !-\n", __func__);
@@ -2721,10 +2665,6 @@ static int panel_doze_disable(struct drm_panel *panel,
 
 	pr_info("%s +\n", __func__);
 
-#ifdef CONFIG_FACTORY_BUILD
-	pr_info("%s factory\n", __func__);
-	return 0;
-#endif
 	cb(dsi, handle, cmd0_tb, ARRAY_SIZE(cmd0_tb));
 	cb(dsi, handle, cmd1_tb, ARRAY_SIZE(cmd1_tb));
 	cb(dsi, handle, cmd2_tb, ARRAY_SIZE(cmd2_tb));

@@ -1267,16 +1267,6 @@ static int fg_check_device(struct fg_chip *chip)
 	else
 		chip->chip_ok = false;
 
-#ifdef CONFIG_FACTORY_BUILD
-	if (!chip->chip_ok) {
-		xmc_info("%s factory test, force a FG type\n", chip->log_tag);
-		chip->device_name = FG_BQ27Z561;
-		chip->device_chem = CHEM_LWN;
-		chip->chip_ok = true;
-		chip->fac_no_bat = true;
-	}
-#endif
-
 	xmc_info("%s device_name = %s, manu_name = %s, device_chem = %s\n", chip->log_tag, data1, data2, data3);
 
 	return ret;

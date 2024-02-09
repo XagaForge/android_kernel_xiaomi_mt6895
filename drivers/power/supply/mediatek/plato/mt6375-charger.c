@@ -1130,11 +1130,7 @@ static void mt6375_chg_bc12_work_func(struct work_struct *work)
 			ddata->psy_usb_type = POWER_SUPPLY_USB_TYPE_CDP;
 			break;
 		case PORT_STAT_UNKNOWN_TA:
-#ifdef CONFIG_FACTORY_BUILD
-			ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB_DCP;
-#else
 			ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB;
-#endif
 			ddata->psy_usb_type = POWER_SUPPLY_USB_TYPE_FLOAT;
 
 			if (ddata->recheck_count <= 6) {

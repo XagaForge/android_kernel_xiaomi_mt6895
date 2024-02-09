@@ -2262,11 +2262,6 @@ static void process_dbg_opt(const char *opt)
 		}
 
 		DAL_Printf("DAL printf\n");
-#ifdef CONFIG_FACTORY_BUILD
-	} else if (strncmp(opt, "daldcberr", 8) == 0) {
-		DAL_Printf("****Device MET Crash BUG!!!!*******\n");
-		DAL_Printf("%s\n", opt);
-#endif
 	} else if (strncmp(opt, "dalclean", 8) == 0) {
 		struct drm_crtc *crtc;
 

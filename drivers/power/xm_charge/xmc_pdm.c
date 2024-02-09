@@ -41,19 +41,11 @@ static const unsigned char *state_name[] = {
 
 static struct charge_chip *g_chip = NULL;
 
-#ifdef CONFIG_FACTORY_BUILD
-static int pdm_vbus_low_gap = 950;
-module_param_named(pdm_vbus_low_gap, pdm_vbus_low_gap, int, 0600);
-
-static int pdm_vbus_high_gap = 1250;
-module_param_named(pdm_vbus_high_gap, pdm_vbus_high_gap, int, 0600);
-#else
 static int pdm_vbus_low_gap = 600;
 module_param_named(pdm_vbus_low_gap, pdm_vbus_low_gap, int, 0600);
 
 static int pdm_vbus_high_gap = 850;
 module_param_named(pdm_vbus_high_gap, pdm_vbus_high_gap, int, 0600);
-#endif
 
 static int pdm_ibus_gap = 450;
 module_param_named(pdm_ibus_gap, pdm_ibus_gap, int, 0600);

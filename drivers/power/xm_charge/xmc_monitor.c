@@ -232,11 +232,6 @@ static void xmc_set_charge_parameter(struct charge_chip *chip)
 	fcc = chip->fcc[index] / (chip->monitor_count < 3 ? 2 : 1);
 	mivr = chip->mivr[index];
 
-#ifdef CONFIG_FACTORY_BUILD
-	if (!chip->usb_typec.pd_type && chip->usb_typec.bc12_type == XMC_BC12_TYPE_SDP)
-		icl = 600;
-#endif
-
 	if (chip->mtbf_test) {
 		icl = max(1800, icl);
 		fcc = max(1800, fcc);
@@ -405,10 +400,6 @@ static void xmc_step_charge(struct charge_chip *chip)
 
 static void xmc_check_bat_connector(struct charge_chip *chip)
 {
-#ifdef CONFIG_FACTORY_BUILD
-	return;
-#endif
-
 	/* If main connector is moved, limit power to 15W */
 	xmc_ops_get_vbat(chip->bbc_dev, &chip->bbc.vbat);
 	if (chip->bbc.vbat <= 1000 || chip->battery.i2c_error_count >= 10) {
