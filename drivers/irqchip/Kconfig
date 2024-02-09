@@ -483,6 +483,18 @@ config LS1X_IRQ
 	help
 	  Support for the Loongson-1 platform Interrupt Controller.
 
+config MTK_SYSIRQ
+	tristate "Mediatek interrupt polarity controller"
+	help
+	  Interrupt polarity controller driver to swap polarity for
+	  interrupts for Mediatek mobile chips.
+
+config MTK_CIRQ
+	bool "Mediatek low-power interrupt controller"
+	help
+	  Low-power interrupt controller driver to monitor IRQS
+	  in the sleep mode for Mediatek mobile chips.
+
 config TI_SCI_INTR_IRQCHIP
 	bool
 	depends on TI_SCI_PROTOCOL
