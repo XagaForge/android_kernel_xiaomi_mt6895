@@ -1,25 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0
 /*
-* Copyright (c) 2014-2015 MediaTek Inc.
-* Author: Tianping.Fang <tianping.fang@mediatek.com>
-*/
+ * Copyright (C) 2020 MediaTek Inc.
+ * Author: Amber Lin <Mw.lin@mediatek.com>
+ */
 
 #include <linux/err.h>
 #include <linux/interrupt.h>
-#include <linux/mfd/mt6397/core.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
 #include <linux/of_device.h>
-#include <linux/platform_device.h>
+#include <linux/of_irq.h>
 #include <linux/regmap.h>
 #include <linux/rtc.h>
-#include <linux/mfd/mt6397/rtc.h>
-#include <linux/mod_devicetable.h>
+#include <linux/mfd/mt6685/rtc.h>
+#include <linux/mfd/mt6685/core.h>
 #include <linux/nvmem-provider.h>
-#include <linux/sched_clock.h>
+#include <linux/sched/clock.h>
+#include <linux/spmi.h>
 
 #ifdef SUPPORT_EOSC_CALI
-#include <linux/mfd/mt6359p/registers.h>
+#include <linux/mfd/mt6685/registers.h>
 #endif
 
 #ifdef SUPPORT_PWR_OFF_ALARM
@@ -32,16 +32,170 @@
 #include <linux/reboot.h>
 #endif
 
-
 /*debug information*/
 static int rtc_show_time;
-static int rtc_show_alarm = 1;
+static int rtc_show_alarm;
 
 module_param(rtc_show_time, int, 0644);
 module_param(rtc_show_alarm, int, 0644);
 
+#define MT6685_E3_HWID 0x30
+#define MT6685_E2_HWID 0x20
 
-static int mtk_rtc_write_trigger(struct mt6397_rtc *rtc);
+static int mtk_rtc_write_trigger(struct mt6685_rtc *rtc);
+
+static int counter;
+static int hwid;
+
+void power_on_mclk(struct mt6685_rtc *rtc)
+{
+	mutex_lock(&rtc->clk_lock);
+	/*Write Protection Key to unlock TOP_CKPDN_CON0*/
+	regmap_write(rtc->regmap, TOP_DIG_WPK, 0x15);
+	regmap_write(rtc->regmap, TOP_DIG_WPK_H, 0x63);
+	/*Power on RTC MCLK before write RTC register*/
+	regmap_write(rtc->regmap, RG_RTC_MCLK_PDN_CLR, RG_RTC_MCLK_PDN_MASK);
+	counter++;
+	mdelay(1);
+	mutex_unlock(&rtc->clk_lock);
+}
+
+static void power_down_mclk(struct mt6685_rtc *rtc)
+{
+	mutex_lock(&rtc->clk_lock);
+	counter--;
+	if (counter < 0) {
+		//dump_stack();
+		pr_info("mclk_counter[%d]\n", counter);
+	}
+	if (counter == 0) {
+		/*Write Protection Key to unlock TOP_CKPDN_CON0*/
+		regmap_write(rtc->regmap, TOP_DIG_WPK, 0x15);
+		regmap_write(rtc->regmap, TOP_DIG_WPK_H, 0x63);
+		/*Power down RTC MCLK after write RTC register*/
+		regmap_write(rtc->regmap, RG_RTC_MCLK_PDN_SET, RG_RTC_MCLK_PDN_MASK);
+		mdelay(1);
+	}
+	mutex_unlock(&rtc->clk_lock);
+}
+
+
+static int rtc_bulk_read(struct mt6685_rtc *rtc, unsigned int reg,
+				   void *val, size_t val_count)
+{
+	int ret;
+
+	ret = regmap_bulk_read(rtc->regmap, reg, val, val_count);
+	return ret;
+}
+
+static int rtc_read(struct mt6685_rtc *rtc, unsigned int reg,
+			      unsigned int *val)
+{
+	rtc_bulk_read(rtc, reg, val, 2);
+	return 0;
+}
+
+static int rtc_bulk_write(struct mt6685_rtc *rtc, unsigned int reg,
+				    const void *val, size_t val_count)
+{
+	int ret;
+
+	ret = regmap_bulk_write(rtc->regmap, reg, val, val_count);
+
+	return ret;
+}
+
+static int rtc_write(struct mt6685_rtc *rtc, unsigned int reg,
+			       unsigned int val)
+{
+	rtc_bulk_write(rtc, reg, &val, 2);
+	return 0;
+}
+
+static int rtc_update_bits(struct mt6685_rtc *rtc, unsigned int reg,
+					  unsigned int mask, unsigned int val)
+{
+	int ret;
+	unsigned int tmp, orig = 0;
+
+	ret = rtc_read(rtc, reg, &orig);
+	if (ret != 0)
+		return ret;
+	tmp = orig & ~mask;
+	tmp |= val & mask;
+	ret = rtc_write(rtc, reg, tmp);
+	return ret;
+}
+
+static unsigned int rtc_spare_reg[SPARE_RG_MAX][3] = {
+	{RTC_RG_FG2, 0xff, 0},
+	{RTC_RG_FG3, 0xff, 0},
+	{RTC_SPAR0, 0xff, 0},
+#ifdef SUPPORT_PWR_OFF_ALARM
+	{RTC_PDN1_H, 0x1, 6},
+#endif
+};
+
+static int rtc_field_read(struct mt6685_rtc *rtc, enum mtk_rtc_spare_enum cmd)
+{
+	unsigned int tmp_val = 0;
+	int ret;
+
+	if (cmd >= 0 && cmd < SPARE_RG_MAX) {
+
+		ret = rtc_read(rtc, rtc->addr_base + rtc_spare_reg[cmd][RTC_REG], &tmp_val);
+		if (ret < 0)
+			return ret;
+		tmp_val = (tmp_val >> rtc_spare_reg[cmd][RTC_SHIFT]) &
+		    rtc_spare_reg[cmd][RTC_MASK];
+
+		pr_info("%s: cmd[%d], get rg[0x%x, 0x%x , %d] = 0x%x\n",
+				__func__, cmd,
+				rtc_spare_reg[cmd][RTC_REG],
+				rtc_spare_reg[cmd][RTC_MASK],
+				rtc_spare_reg[cmd][RTC_SHIFT], tmp_val);
+		return tmp_val;
+	}
+	return 0;
+}
+
+static int rtc_spare_field_write(struct mt6685_rtc *rtc,
+				enum mtk_rtc_spare_enum cmd, unsigned int val)
+{
+	unsigned int tmp_val = 0;
+
+	if (cmd >= 0 && cmd < SPARE_RG_MAX) {
+		pr_info("%s: cmd[%d], set rg[0x%x, 0x%x , %d] = 0x%x\n",
+				__func__, cmd,
+				rtc_spare_reg[cmd][RTC_REG],
+				rtc_spare_reg[cmd][RTC_MASK],
+				rtc_spare_reg[cmd][RTC_SHIFT], val);
+
+		rtc_read(rtc, rtc->addr_base + rtc_spare_reg[cmd][RTC_REG], &tmp_val);
+
+		tmp_val = tmp_val & ~(rtc_spare_reg[cmd][RTC_MASK] <<
+				rtc_spare_reg[cmd][RTC_SHIFT]);
+
+		if (rtc->data->unlock_version == UNLOCK_MT6685_SERIES) {
+			if (rtc_spare_reg[cmd][RTC_REG] == RTC_RG_FG2) {
+				rtc_write(rtc, rtc->addr_base + RTC_RG_FG2, 0xaf);
+				rtc_write(rtc, rtc->addr_base + RTC_RG_FG2, 0xaf);
+				rtc_write(rtc, rtc->addr_base + RTC_RG_FG2, 0x5e);
+			}
+			if (rtc_spare_reg[cmd][RTC_REG] == RTC_RG_FG3) {
+				rtc_write(rtc, rtc->addr_base + RTC_RG_FG3, 0x66);
+				rtc_write(rtc, rtc->addr_base + RTC_RG_FG3, 0x66);
+				rtc_write(rtc, rtc->addr_base + RTC_RG_FG3, 0xf1);
+			}
+		}
+
+		rtc_write(rtc, rtc->addr_base + rtc_spare_reg[cmd][RTC_REG],
+					tmp_val | ((val & rtc_spare_reg[cmd][RTC_MASK]) <<
+						rtc_spare_reg[cmd][RTC_SHIFT]));
+	}
+	return 0;
+}
 
 static u16 rtc_pwron_reg[RTC_OFFSET_COUNT][3] = {
 	{RTC_PWRON_SEC, RTC_PWRON_SEC_MASK, RTC_PWRON_SEC_SHIFT},
@@ -53,21 +207,9 @@ static u16 rtc_pwron_reg[RTC_OFFSET_COUNT][3] = {
 	{RTC_PWRON_YEA, RTC_PWRON_YEA_MASK, RTC_PWRON_YEA_SHIFT},
 };
 
-static const struct reg_field mtk_rtc_spare_reg_fields[SPARE_RG_MAX] = {
-	[SPARE_AL_HOU] = REG_FIELD(RTC_AL_HOU, 8, 15),
-	[SPARE_AL_MTH] = REG_FIELD(RTC_AL_MTH, 8, 15),
-	[SPARE_SPAR0]  = REG_FIELD(RTC_SPAR0, 0, 7),
-#ifdef SUPPORT_PWR_OFF_ALARM
-	[SPARE_KPOC]   = REG_FIELD(RTC_PDN1, 14, 14),
-#endif
-};
+
 
 #ifdef SUPPORT_EOSC_CALI
-static const struct reg_field mt6359_cali_reg_fields[CALI_FILED_MAX] = {
-	[RTC_EOSC32_CK_PDN]	= REG_FIELD(MT6359P_SCK_TOP_CKPDN_CON0, 2, 2),
-	[EOSC_CALI_TD]		= REG_FIELD(MT6359P_RTC_AL_DOW, 5, 7),
-	[RTC_K_EOSC_RSV]	= REG_FIELD(MT6359P_RTC_AL_YEA, 8, 10),
-};
 
 static int rtc_eosc_cali_td;
 module_param(rtc_eosc_cali_td, int, 0644);
@@ -75,14 +217,18 @@ module_param(rtc_eosc_cali_td, int, 0644);
 
 static void mtk_rtc_enable_k_eosc(struct device *dev)
 {
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
+	struct mt6685_rtc *rtc = dev_get_drvdata(dev);
 	u32 td;
 
-	if (!rtc->cali_is_supported)
+	power_on_mclk(rtc);
+
+	if (!rtc->cali_is_supported) {
+		power_down_mclk(rtc);
 		return;
+	}
 
 	/* Truning on eosc cali mode clock */
-	regmap_field_write(rtc->cali[RTC_EOSC32_CK_PDN], 0);
+	rtc_update_bits(rtc, TOP_RTC_EOSC32_CK_PDN, TOP_RTC_EOSC32_CK_PDN_MASK, 0);
 
 	if (rtc_eosc_cali_td) {
 		dev_notice(dev, "%s: rtc_eosc_cali_td = %d\n",
@@ -104,40 +250,18 @@ static void mtk_rtc_enable_k_eosc(struct device *dev)
 			td = EOSC_CALI_TD_08_SEC;
 			break;
 		}
-		regmap_field_write(rtc->cali[EOSC_CALI_TD], td);
+
+		rtc_update_bits(rtc, rtc->addr_base + EOSC_CALI_TD, EOSC_CALI_TD_MASK, td);
+		mtk_rtc_write_trigger(rtc);
 	}
-
-	if (rtc->data->eosc_cali_version == EOSC_CALI_MT6359P_SERIES)
-		regmap_field_write(rtc->cali[RTC_K_EOSC_RSV], EOSC_SOL_2);
-
-	mtk_rtc_write_trigger(rtc);
-}
-
-static int mtk_rtc_config_eosc_cali(struct device *dev)
-{
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
-	int i;
-
-	for (i = 0; i < CALI_FILED_MAX; i++) {
-		rtc->cali[i] = devm_regmap_field_alloc(dev, rtc->regmap,
-					rtc->data->cali_reg_fields[i]);
-		if (IS_ERR(rtc->cali[i])) {
-			dev_err(rtc->rtc_dev->dev.parent,
-				"cali regmap field[%d] err= %ld\n",
-				i, PTR_ERR(rtc->cali[i]));
-			return PTR_ERR(rtc->cali[i]);
-		}
-	}
-	rtc->cali_is_supported = true;
-
-	return 0;
+	power_down_mclk(rtc);
 }
 #endif
 
 #ifdef SUPPORT_PWR_OFF_ALARM
 
 static u32 bootmode = NORMAL_BOOT;
-static struct wakeup_source *mt6397_rtc_suspend_lock;
+static struct wakeup_source *mt6685_rtc_suspend_lock;
 static bool rtc_pm_notifier_registered;
 static bool kpoc_alarm;
 static unsigned long rtc_pm_status;
@@ -150,8 +274,8 @@ static unsigned long rtc_pm_status;
 static int rtc_pm_event(struct notifier_block *notifier, unsigned long pm_event,
 			void *unused)
 {
-	struct mt6397_rtc *rtc = container_of(notifier,
-		struct mt6397_rtc, pm_nb);
+	struct mt6685_rtc *rtc = container_of(notifier,
+		struct mt6685_rtc, pm_nb);
 
 	dev_notice(rtc->rtc_dev->dev.parent, "%s = %lu\n", __func__, pm_event);
 
@@ -177,24 +301,26 @@ static int rtc_pm_event(struct notifier_block *notifier, unsigned long pm_event,
 }
 #endif /* CONFIG_PM */
 
-static void rtc_mark_kpoc(struct mt6397_rtc *rtc)
+static void rtc_mark_kpoc(struct mt6685_rtc *rtc)
 {
+	power_on_mclk(rtc);
 	mutex_lock(&rtc->lock);
-	regmap_field_write(rtc->spare[SPARE_KPOC], 1);
+	rtc_spare_field_write(rtc, SPARE_KPOC, 1);
 	mtk_rtc_write_trigger(rtc);
 	mutex_unlock(&rtc->lock);
+	power_down_mclk(rtc);
 }
 
 static void mtk_rtc_work_queue(struct work_struct *work)
 {
-	struct mt6397_rtc *rtc = container_of(work, struct mt6397_rtc, work);
+	struct mt6685_rtc *rtc = container_of(work, struct mt6685_rtc, work);
 	unsigned long ret;
 	unsigned int msecs;
 
 	ret = wait_for_completion_timeout(&rtc->comp, msecs_to_jiffies(30000));
 	if (!ret) {
 		dev_notice(rtc->rtc_dev->dev.parent, "%s timeout\n", __func__);
-		BUG_ON(1);
+		WARN_ON(1);
 	} else {
 		msecs = jiffies_to_msecs(ret);
 		dev_notice(rtc->rtc_dev->dev.parent,
@@ -204,9 +330,9 @@ static void mtk_rtc_work_queue(struct work_struct *work)
 	}
 }
 
-static void mtk_rtc_reboot(struct mt6397_rtc *rtc)
+static void mtk_rtc_reboot(struct mt6685_rtc *rtc)
 {
-	__pm_stay_awake(mt6397_rtc_suspend_lock);
+	__pm_stay_awake(mt6685_rtc_suspend_lock);
 
 	init_completion(&rtc->comp);
 	schedule_work_on(cpumask_first(cpu_online_mask), &rtc->work);
@@ -227,39 +353,69 @@ reboot:
 	complete(&rtc->comp);
 }
 
-static void mtk_rtc_update_pwron_alarm_flag(struct mt6397_rtc *rtc)
+static void mtk_rtc_update_pwron_alarm_flag(struct mt6685_rtc *rtc)
 {
 	int ret;
 
+	power_on_mclk(rtc);
+
 	dev_notice(rtc->rtc_dev->dev.parent, "%s\n", __func__);
 
-	ret = regmap_update_bits(rtc->regmap,
+	ret = rtc_update_bits(rtc,
 				rtc->addr_base + RTC_PDN1,
 				RTC_PDN1_PWRON_TIME, 0);
 	if (ret < 0)
 		goto exit;
 
-	ret = regmap_update_bits(rtc->regmap,
+	ret =  rtc_update_bits(rtc,
 				rtc->addr_base + RTC_PDN2,
 				RTC_PDN2_PWRON_ALARM, RTC_PDN2_PWRON_ALARM);
 	if (ret < 0)
 		goto exit;
 
 	mtk_rtc_write_trigger(rtc);
+	power_down_mclk(rtc);
 	return;
+
 exit:
+	power_down_mclk(rtc);
 	dev_err(rtc->rtc_dev->dev.parent, "%s error\n", __func__);
 }
 
-static int mtk_rtc_restore_alarm(struct mt6397_rtc *rtc, struct rtc_time *tm)
+static int mtk_rtc_update_alarm_irq_en(struct mt6685_rtc *rtc, int hardware_id, int value)
+{
+	int ret;
+
+	if (value == 0) {
+		ret =  rtc_update_bits(rtc,
+				rtc->addr_base + RTC_IRQ_EN,
+				RTC_IRQ_EN_ONESHOT_AL, value);
+	} else {
+		if (hardware_id >= MT6685_E3_HWID) {
+			ret =  rtc_update_bits(rtc,
+				rtc->addr_base + RTC_IRQ_EN,
+				RTC_IRQ_EN_ONESHOT_AL, RTC_IRQ_EN_AL);
+		} else {
+			ret =  rtc_update_bits(rtc,
+				rtc->addr_base + RTC_IRQ_EN,
+				RTC_IRQ_EN_ONESHOT_AL, RTC_IRQ_EN_ONESHOT_AL);
+		}
+	}
+	return ret;
+}
+
+static int mtk_rtc_restore_alarm(struct mt6685_rtc *rtc, struct rtc_time *tm)
 {
 	int ret;
 	u16 data[RTC_OFFSET_COUNT] = { 0 };
 
-	ret = regmap_bulk_read(rtc->regmap, rtc->addr_base + RTC_AL_SEC,
-			    data, RTC_OFFSET_COUNT);
+	power_on_mclk(rtc);
+
+	ret = rtc_bulk_read(rtc, rtc->addr_base + RTC_AL_SEC,
+			    data, RTC_OFFSET_COUNT * 2);
 	if (ret < 0)
 		goto exit;
+
 	data[RTC_OFFSET_SEC] = ((data[RTC_OFFSET_SEC] & ~(RTC_AL_SEC_MASK)) |
 				(tm->tm_sec & RTC_AL_SEC_MASK));
 	data[RTC_OFFSET_MIN] = ((data[RTC_OFFSET_MIN] & ~(RTC_AL_MIN_MASK)) |
@@ -278,38 +434,38 @@ static int mtk_rtc_restore_alarm(struct mt6397_rtc *rtc, struct rtc_time *tm)
 		tm->tm_year + RTC_MIN_YEAR, tm->tm_mon, tm->tm_mday,
 		tm->tm_hour, tm->tm_min, tm->tm_sec);
 
-	ret = regmap_bulk_write(rtc->regmap, rtc->addr_base + RTC_AL_SEC,
-				data, RTC_OFFSET_COUNT);
+	ret = rtc_bulk_write(rtc, rtc->addr_base + RTC_AL_SEC,
+				data, RTC_OFFSET_COUNT * 2);
 	if (ret < 0)
 		goto exit;
 
-	ret = regmap_write(rtc->regmap, rtc->addr_base + RTC_AL_MASK,
+	ret = rtc_write(rtc, rtc->addr_base + RTC_AL_MASK,
 				RTC_AL_MASK_DOW);
 	if (ret < 0)
 		goto exit;
-	ret = regmap_update_bits(rtc->regmap,
-				rtc->addr_base + RTC_IRQ_EN,
-				RTC_IRQ_EN_ONESHOT_AL,
-				RTC_IRQ_EN_ONESHOT_AL);
+
+	ret = mtk_rtc_update_alarm_irq_en(rtc, hwid, 1);
 	if (ret < 0)
 		goto exit;
-	mtk_rtc_write_trigger(rtc);
 
+	mtk_rtc_write_trigger(rtc);
+	power_down_mclk(rtc);
 	return ret;
 
 exit:
+	power_down_mclk(rtc);
 	dev_err(rtc->rtc_dev->dev.parent, "%s error\n", __func__);
 	return ret;
 }
 
-bool mtk_rtc_is_pwron_alarm(struct mt6397_rtc *rtc,
+bool mtk_rtc_is_pwron_alarm(struct mt6685_rtc *rtc,
 	struct rtc_time *nowtm, struct rtc_time *tm)
 {
 	u32 pdn1 = 0, spar1 = 0, pdn2 = 0, spar0 = 0;
 	int ret, sec = 0;
 	u16 data[RTC_OFFSET_COUNT] = { 0 };
 
-	ret = regmap_read(rtc->regmap, rtc->addr_base + RTC_PDN1, &pdn1);
+	ret = rtc_read(rtc, rtc->addr_base + RTC_PDN1, &pdn1);
 	if (ret < 0)
 		goto exit;
 
@@ -319,9 +475,9 @@ bool mtk_rtc_is_pwron_alarm(struct mt6397_rtc *rtc,
 
 		/*get current rtc time*/
 		do {
-			ret = regmap_bulk_read(rtc->regmap,
+			ret = rtc_bulk_read(rtc,
 						rtc->addr_base + RTC_TC_SEC,
-						data, RTC_OFFSET_COUNT);
+						data, RTC_OFFSET_COUNT * 2);
 			if (ret < 0)
 				goto exit;
 			nowtm->tm_sec = data[RTC_OFFSET_SEC] & RTC_TC_SEC_MASK;
@@ -333,7 +489,7 @@ bool mtk_rtc_is_pwron_alarm(struct mt6397_rtc *rtc,
 			nowtm->tm_year =
 				data[RTC_OFFSET_YEAR] & RTC_TC_YEA_MASK;
 
-			ret = regmap_read(rtc->regmap,
+			ret = rtc_read(rtc,
 					rtc->addr_base + RTC_TC_SEC, &sec);
 			if (ret < 0)
 				goto exit;
@@ -348,17 +504,17 @@ bool mtk_rtc_is_pwron_alarm(struct mt6397_rtc *rtc,
 			nowtm->tm_min, nowtm->tm_sec);
 
 		/*get power on time from SPARE */
-		ret = regmap_read(rtc->regmap,
+		ret = rtc_read(rtc,
 				rtc->addr_base + RTC_SPAR0, &spar0);
 		if (ret < 0)
 			goto exit;
 
-		ret = regmap_read(rtc->regmap,
+		ret = rtc_read(rtc,
 					rtc->addr_base + RTC_SPAR1, &spar1);
 		if (ret < 0)
 			goto exit;
 
-		ret = regmap_read(rtc->regmap,
+		ret = rtc_read(rtc,
 					rtc->addr_base + RTC_PDN2, &pdn2);
 		if (ret < 0)
 			goto exit;
@@ -393,160 +549,93 @@ exit:
 }
 #endif
 
-static int mtk_rtc_write_trigger(struct mt6397_rtc *rtc)
+static int mtk_rtc_write_trigger(struct mt6685_rtc *rtc)
 {
+	unsigned long timeout = jiffies + HZ;
 	int ret;
-	u32 data;
+	u32 data = 0;
 
-	ret = regmap_write(rtc->regmap, rtc->addr_base + rtc->data->wrtgr, 1);
+	ret = rtc_write(rtc,
+			rtc->addr_base + rtc->data->wrtgr, 1);
 	if (ret < 0)
 		return ret;
 
-	ret = regmap_read_poll_timeout(rtc->regmap,
-					rtc->addr_base + RTC_BBPU, data,
-					!(data & RTC_BBPU_CBUSY),
-					MTK_RTC_POLL_DELAY_US,
-					MTK_RTC_POLL_TIMEOUT);
-	if (ret < 0)
-		dev_err(rtc->rtc_dev->dev.parent,
-			"failed to write WRTGR: %d\n", ret);
-
-	return ret;
-}
-
-static int rtc_nvram_read(void *priv, unsigned int offset, void *val,
-							size_t bytes)
-{
-	struct mt6397_rtc *rtc = dev_get_drvdata(priv);
-	unsigned int ival;
-	int ret;
-	u8 *buf = val;
-
-	mutex_lock(&rtc->lock);
-
-	for (; bytes; bytes--) {
-		ret = regmap_field_read(rtc->spare[offset++], &ival);
-		if (ret)
-			goto out;
-		*buf++ = (u8)ival;
+	while (1) {
+		ret = rtc_read(rtc, rtc->addr_base + RTC_BBPU,
+				  &data);
+		if (ret < 0)
+			break;
+		if (!(data & RTC_BBPU_CBUSY))
+			break;
+		if (time_after(jiffies, timeout)) {
+			ret = -ETIMEDOUT;
+			break;
+		}
+		cpu_relax();
 	}
-out:
-	mutex_unlock(&rtc->lock);
 	return ret;
 }
 
-static int rtc_nvram_write(void *priv, unsigned int offset, void *val,
-							size_t bytes)
-{
-	struct mt6397_rtc *rtc = dev_get_drvdata(priv);
-	unsigned int ival;
-	int ret;
-	u8 *buf = val;
 
-	mutex_lock(&rtc->lock);
 
-	for (; bytes; bytes--) {
-		ival = *buf++;
-		ret = regmap_field_write(rtc->spare[offset++], ival);
-		if (ret)
-			goto out;
-	}
-	mtk_rtc_write_trigger(rtc);
-out:
-	mutex_unlock(&rtc->lock);
-	return ret;
-}
-
-static void mtk_rtc_reset_bbpu_alarm_status(struct mt6397_rtc *rtc)
+static void mtk_rtc_reset_bbpu_alarm_status(struct mt6685_rtc *rtc)
 {
 	u32 bbpu;
 	int ret;
 
+	power_on_mclk(rtc);
+
 	bbpu = RTC_BBPU_KEY | RTC_BBPU_PWREN | RTC_BBPU_RESET_AL;
-	ret = regmap_write(rtc->regmap, rtc->addr_base + RTC_BBPU, bbpu);
+	ret = rtc_write(rtc, rtc->addr_base + RTC_BBPU, bbpu);
 	if (ret < 0)
 		goto exit;
-	mtk_rtc_write_trigger(rtc);
 
+	mtk_rtc_write_trigger(rtc);
+	power_down_mclk(rtc);
 	return;
 exit:
+	power_down_mclk(rtc);
 	dev_err(rtc->rtc_dev->dev.parent, "%s error\n", __func__);
 
 }
 
-#ifndef USER_BUILD_KERNEL
-void mtk_rtc_lp_exception(struct mt6397_rtc *rtc)
-{
-	u32 bbpu = 0, irqsta = 0, irqen = 0, osc32 = 0;
-	u32 pwrkey1 = 0, pwrkey2 = 0, prot = 0, con = 0, sec1 = 0, sec2 = 0;
-
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_BBPU, &bbpu);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_IRQ_STA, &irqsta);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_IRQ_EN, &irqen);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_OSC32CON, &osc32);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_POWERKEY1, &pwrkey1);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_POWERKEY2, &pwrkey2);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_PROT, &prot);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_CON, &con);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_TC_SEC, &sec1);
-	mdelay(2000);
-	regmap_read(rtc->regmap,
-				rtc->addr_base + RTC_TC_SEC, &sec2);
-
-	dev_emerg(rtc->rtc_dev->dev.parent, "!!! 32K WAS STOPPED !!!\n"
-		"RTC_BBPU      = 0x%x\n"
-		"RTC_IRQ_STA   = 0x%x\n"
-		"RTC_IRQ_EN    = 0x%x\n"
-		"RTC_OSC32CON  = 0x%x\n"
-		"RTC_POWERKEY1 = 0x%x\n"
-		"RTC_POWERKEY2 = 0x%x\n"
-		"RTC_PROT      = 0x%x\n"
-		"RTC_CON       = 0x%x\n"
-		"RTC_TC_SEC    = %02d\n"
-		"RTC_TC_SEC    = %02d\n",
-		bbpu, irqsta, irqen, osc32, pwrkey1, pwrkey2, prot, con, sec1,
-		sec2);
-}
-#endif
-
-static int mtk_rtc_is_alarm_irq(struct mt6397_rtc *rtc)
+static int mtk_rtc_is_alarm_irq(struct mt6685_rtc *rtc)
 {
 	u32 irqsta = 0, bbpu;
+	u32 sck;
 	int ret;
 
-	/* read clear */
-	ret = regmap_read(rtc->regmap, rtc->addr_base + RTC_IRQ_STA, &irqsta);
+	power_on_mclk(rtc);
+
+	ret = rtc_read(rtc, rtc->addr_base + RTC_IRQ_STA, &irqsta);/* read clear */
+
+	/*clear SCK_TOP rtc interrupt*/
+	rtc_read(rtc, SCK_TOP_INT_STATUS0, &sck);
+	rtc_write(rtc, SCK_TOP_INT_STATUS0, sck);
+
 	if ((ret == 0) && (irqsta & RTC_IRQ_STA_AL)) {
 		bbpu = RTC_BBPU_KEY | RTC_BBPU_PWREN;
-		ret = regmap_write(rtc->regmap,
+		ret = rtc_write(rtc,
 					rtc->addr_base + RTC_BBPU, bbpu);
 		if (ret < 0)
 			dev_err(rtc->rtc_dev->dev.parent,
-				"%s error\n", __func__);
-		mtk_rtc_write_trigger(rtc);
+				"%s: %d error\n", __func__, __LINE__);
 
+		ret = mtk_rtc_update_alarm_irq_en(rtc, hwid, 0);
+		if (ret < 0)
+			dev_err(rtc->rtc_dev->dev.parent,
+				"%s: %d error\n", __func__, __LINE__);
+		mtk_rtc_write_trigger(rtc);
+		power_down_mclk(rtc);
 		return RTC_ALSTA;
 	}
-#ifndef USER_BUILD_KERNEL
-	if ((ret == 0) && (irqsta & RTC_IRQ_STA_LP))
-		mtk_rtc_lp_exception(rtc);
-#endif
-
+	power_down_mclk(rtc);
 	return RTC_NONE;
 }
 
 static irqreturn_t mtk_rtc_irq_handler_thread(int irq, void *data)
 {
-	struct mt6397_rtc *rtc = data;
+	struct mt6685_rtc *rtc = data;
 	bool pwron_alm = false;
 	int status = RTC_NONE;
 #ifdef SUPPORT_PWR_OFF_ALARM
@@ -558,16 +647,16 @@ static irqreturn_t mtk_rtc_irq_handler_thread(int irq, void *data)
 
 	status = mtk_rtc_is_alarm_irq(rtc);
 
+	if (rtc->rtc_dev == NULL) {
+		mutex_unlock(&rtc->lock);
+		return IRQ_NONE;
+	}
+
 	dev_notice(rtc->rtc_dev->dev.parent, "%s:%d\n", __func__, status);
 
 	if (status == RTC_NONE) {
 		mutex_unlock(&rtc->lock);
 		return IRQ_NONE;
-	}
-
-	if (status == RTC_LPSTA) {
-		mutex_unlock(&rtc->lock);
-		return IRQ_HANDLED;
 	}
 
 	mtk_rtc_reset_bbpu_alarm_status(rtc);
@@ -631,15 +720,24 @@ out:
 	return IRQ_HANDLED;
 }
 
-static int __mtk_rtc_read_time(struct mt6397_rtc *rtc,
+static int __mtk_rtc_read_time(struct mt6685_rtc *rtc,
 			       struct rtc_time *tm, int *sec)
 {
 	int ret;
+	unsigned int reload = 0;
 	u16 data[RTC_OFFSET_COUNT] = { 0 };
 
+	power_on_mclk(rtc);
+
+	rtc_read(rtc, rtc->addr_base + RTC_BBPU, &reload);
+	reload = reload | RTC_BBPU_KEY | RTC_BBPU_RELOAD;
+	rtc_write(rtc, rtc->addr_base + RTC_BBPU, reload);
+	mtk_rtc_write_trigger(rtc);
+	power_down_mclk(rtc);
+
 	mutex_lock(&rtc->lock);
-	ret = regmap_bulk_read(rtc->regmap, rtc->addr_base + RTC_TC_SEC,
-			       data, RTC_OFFSET_COUNT);
+	ret = rtc_bulk_read(rtc, rtc->addr_base + RTC_TC_SEC,
+			       data, RTC_OFFSET_COUNT * 2);
 	if (ret < 0)
 		goto exit;
 
@@ -650,14 +748,15 @@ static int __mtk_rtc_read_time(struct mt6397_rtc *rtc,
 	tm->tm_mon = data[RTC_OFFSET_MTH] & RTC_TC_MTH_MASK;
 	tm->tm_year = data[RTC_OFFSET_YEAR] & RTC_TC_YEA_MASK;
 
-	ret = regmap_read(rtc->regmap, rtc->addr_base + RTC_TC_SEC, sec);
+	ret = rtc_read(rtc, rtc->addr_base + RTC_TC_SEC, sec);
 	*sec &= RTC_TC_SEC_MASK;
 exit:
 	mutex_unlock(&rtc->lock);
 	return ret;
+
 }
 
-static void mtk_rtc_set_pwron_time(struct mt6397_rtc *rtc, struct rtc_time *tm)
+static void mtk_rtc_set_pwron_time(struct mt6685_rtc *rtc, struct rtc_time *tm)
 {
 	u32 data[RTC_OFFSET_COUNT];
 	int ret, i;
@@ -678,7 +777,7 @@ static void mtk_rtc_set_pwron_time(struct mt6397_rtc *rtc, struct rtc_time *tm)
 	for (i = RTC_OFFSET_SEC; i < RTC_OFFSET_COUNT; i++) {
 		if (i == RTC_OFFSET_DOW)
 			continue;
-		ret = regmap_update_bits(rtc->regmap,
+		ret =  rtc_update_bits(rtc,
 			rtc->addr_base + rtc_pwron_reg[i][RTC_REG],
 			rtc_pwron_reg[i][RTC_MASK], data[i]);
 		if (ret < 0)
@@ -690,7 +789,7 @@ exit:
 	dev_err(rtc->rtc_dev->dev.parent, "%s error\n", __func__);
 }
 
-void mtk_rtc_save_pwron_time(struct mt6397_rtc *rtc,
+void mtk_rtc_save_pwron_time(struct mt6685_rtc *rtc,
 	bool enable, struct rtc_time *tm)
 {
 	u32 pdn1 = 0;
@@ -702,24 +801,24 @@ void mtk_rtc_save_pwron_time(struct mt6397_rtc *rtc,
 	/* update power on alarm related flags */
 	if (enable)
 		pdn1 = RTC_PDN1_PWRON_TIME;
-	ret = regmap_update_bits(rtc->regmap,
+	ret =  rtc_update_bits(rtc,
 				rtc->addr_base + RTC_PDN1,
 				RTC_PDN1_PWRON_TIME, pdn1);
 	if (ret < 0)
 		goto exit;
 
 	mtk_rtc_write_trigger(rtc);
-
 	return;
 
 exit:
 	dev_err(rtc->rtc_dev->dev.parent, "%s error\n", __func__);
+	return;
 }
 
 static int mtk_rtc_read_time(struct device *dev, struct rtc_time *tm)
 {
 	time64_t time;
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
+	struct mt6685_rtc *rtc = dev_get_drvdata(dev);
 	int days, sec, ret;
 	unsigned long long timeout = sched_clock() + 500000000;
 
@@ -737,7 +836,7 @@ static int mtk_rtc_read_time(struct device *dev, struct rtc_time *tm)
 	 * RTC_MIN_YEAR_OFFSET before write year data to register, and plus
 	 * RTC_MIN_YEAR_OFFSET back after read year from register
 	 */
-	tm->tm_year += RTC_MIN_YEAR_OFFSET;
+	tm->tm_year += RTC_MIN_YEAR_OFFSET;//+110
 
 	/* HW register start mon from one, but tm_mon start from zero. */
 	tm->tm_mon--;
@@ -762,9 +861,11 @@ exit:
 
 static int mtk_rtc_set_time(struct device *dev, struct rtc_time *tm)
 {
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
+	struct mt6685_rtc *rtc = dev_get_drvdata(dev);
 	int ret;
 	u16 data[RTC_OFFSET_COUNT];
+
+	power_on_mclk(rtc);
 
 	dev_notice(rtc->rtc_dev->dev.parent,
 			"set tc time = %04d/%02d/%02d %02d:%02d:%02d\n",
@@ -782,37 +883,37 @@ static int mtk_rtc_set_time(struct device *dev, struct rtc_time *tm)
 	data[RTC_OFFSET_YEAR] = tm->tm_year;
 
 	mutex_lock(&rtc->lock);
-	ret = regmap_bulk_write(rtc->regmap, rtc->addr_base + RTC_TC_SEC,
-				data, RTC_OFFSET_COUNT);
+	ret = rtc_bulk_write(rtc, rtc->addr_base + RTC_TC_SEC,
+				data, RTC_OFFSET_COUNT * 2);
 	if (ret < 0)
 		goto exit;
 
 	/* Time register write to hardware after call trigger function */
 	ret = mtk_rtc_write_trigger(rtc);
-
 exit:
 	mutex_unlock(&rtc->lock);
+	power_down_mclk(rtc);
 	return ret;
 }
 
 static int mtk_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alm)
 {
 	struct rtc_time *tm = &alm->time;
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
+	struct mt6685_rtc *rtc = dev_get_drvdata(dev);
 	u32 irqen = 0, pdn2 = 0;
 	int ret;
 	u16 data[RTC_OFFSET_COUNT] = { 0 };
 
 	mutex_lock(&rtc->lock);
-	ret = regmap_read(rtc->regmap, rtc->addr_base + RTC_IRQ_EN, &irqen);
+	ret = rtc_read(rtc, rtc->addr_base + RTC_IRQ_EN, &irqen);
 	if (ret < 0)
 		goto err_exit;
-	ret = regmap_read(rtc->regmap, rtc->addr_base + RTC_PDN2, &pdn2);
+	ret = rtc_read(rtc, rtc->addr_base + RTC_PDN2, &pdn2);
 	if (ret < 0)
 		goto err_exit;
 
-	ret = regmap_bulk_read(rtc->regmap, rtc->addr_base + RTC_AL_SEC,
-			       data, RTC_OFFSET_COUNT);
+	ret = rtc_bulk_read(rtc, rtc->addr_base + RTC_AL_SEC,
+			       data, RTC_OFFSET_COUNT * 2);
 	if (ret < 0)
 		goto err_exit;
 
@@ -844,10 +945,12 @@ err_exit:
 static int mtk_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
 {
 	struct rtc_time *tm = &alm->time;
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
+	struct mt6685_rtc *rtc = dev_get_drvdata(dev);
 	int ret;
 	u16 data[RTC_OFFSET_COUNT];
 	ktime_t target;
+
+	power_on_mclk(rtc);
 
 	if (alm->enabled == 1) {
 		/* Add one more second to postpone wake time. */
@@ -879,14 +982,14 @@ static int mtk_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
 		break;
 	}
 
-	ret = regmap_update_bits(rtc->regmap,
+	ret = rtc_update_bits(rtc,
 			rtc->addr_base + RTC_PDN2, RTC_PDN2_PWRON_ALARM, 0);
 	if (ret < 0)
 		goto exit;
 	mtk_rtc_write_trigger(rtc);
 
-	ret = regmap_bulk_read(rtc->regmap, rtc->addr_base + RTC_AL_SEC,
-			       data, RTC_OFFSET_COUNT);
+	ret = rtc_bulk_read(rtc, rtc->addr_base + RTC_AL_SEC,
+			       data, RTC_OFFSET_COUNT * 2);
 	if (ret < 0)
 		goto exit;
 
@@ -904,28 +1007,24 @@ static int mtk_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
 				(tm->tm_year & RTC_AL_YEA_MASK));
 
 	if (alm->enabled) {
-		ret = regmap_bulk_write(rtc->regmap,
+		ret = rtc_bulk_write(rtc,
 					rtc->addr_base + RTC_AL_SEC,
-					data, RTC_OFFSET_COUNT);
+					data, RTC_OFFSET_COUNT * 2);
 		if (ret < 0)
 			goto exit;
-		ret = regmap_write(rtc->regmap, rtc->addr_base + RTC_AL_MASK,
+		ret = rtc_write(rtc, rtc->addr_base + RTC_AL_MASK,
 				   RTC_AL_MASK_DOW);
 		if (ret < 0)
 			goto exit;
-		ret = regmap_update_bits(rtc->regmap,
-					 rtc->addr_base + RTC_IRQ_EN,
-					 RTC_IRQ_EN_ONESHOT_AL,
-					 RTC_IRQ_EN_ONESHOT_AL);
+
+		ret = mtk_rtc_update_alarm_irq_en(rtc, hwid, 1);
 		if (ret < 0)
 			goto exit;
-	} else {
-		ret = regmap_update_bits(rtc->regmap,
-					 rtc->addr_base + RTC_IRQ_EN,
-					 RTC_IRQ_EN_ONESHOT_AL, 0);
-		if (ret < 0)
-			goto exit;
-	}
+		} else {
+			ret = mtk_rtc_update_alarm_irq_en(rtc, hwid, 0);
+			if (ret < 0)
+				goto exit;
+		}
 
 	/* All alarm time register write to hardware after calling
 	 * mtk_rtc_write_trigger. This can avoid race condition if alarm
@@ -934,10 +1033,11 @@ static int mtk_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alm)
 	ret = mtk_rtc_write_trigger(rtc);
 exit:
 	mutex_unlock(&rtc->lock);
+	power_down_mclk(rtc);
 	return ret;
 }
 
-int alarm_set_power_on(struct device *dev, struct rtc_wkalrm *alm)
+int rtc_alarm_set_power_on(struct device *dev, struct rtc_wkalrm *alm)
 {
 	int err = 0;
 	struct rtc_time tm;
@@ -973,7 +1073,7 @@ static int mtk_rtc_ioctl(struct device *dev, unsigned int cmd, unsigned long arg
 	case RTC_POFF_ALM_SET:
 		if (copy_from_user(&alm.time, uarg, sizeof(alm.time)))
 			return -EFAULT;
-		err = alarm_set_power_on(dev, &alm);
+		err = rtc_alarm_set_power_on(dev, &alm);
 		break;
 	default:
 		err = -EINVAL;
@@ -991,11 +1091,58 @@ static const struct rtc_class_ops mtk_rtc_ops = {
 	.set_alarm  = mtk_rtc_set_alarm,
 };
 
+int rtc_nvram_read(void *priv, unsigned int offset, void *val,
+							size_t bytes)
+{
+	struct mt6685_rtc *rtc = dev_get_drvdata(priv);
+	unsigned int ret;
+	u8 *buf = val;
+
+	mutex_lock(&rtc->lock);
+
+	for (; bytes; bytes--) {
+		ret = rtc_field_read(rtc, (SPARE_FG2 + offset++));
+		if (ret < 0)
+			goto out;
+		else {
+			*buf++ = (u8)ret;
+			ret = 0;
+		}
+	}
+out:
+	mutex_unlock(&rtc->lock);
+	return ret;
+}
+
+int rtc_nvram_write(void *priv, unsigned int offset, void *val,
+							size_t bytes)
+{
+	struct mt6685_rtc *rtc = dev_get_drvdata(priv);
+	unsigned int ival;
+	int ret;
+	u8 *buf = val;
+
+	power_on_mclk(rtc);
+
+	mutex_lock(&rtc->lock);
+
+	for (; bytes; bytes--) {
+		ival = *buf++;
+		ret = rtc_spare_field_write(rtc, (SPARE_FG2 + offset++), ival);
+		if (ret < 0)
+			goto out;
+	}
+	mtk_rtc_write_trigger(rtc);
+out:
+	mutex_unlock(&rtc->lock);
+	power_down_mclk(rtc);
+	return ret;
+}
+
 static int mtk_rtc_set_spare(struct device *dev)
 {
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
-	struct reg_field tmp[SPARE_RG_MAX];
-	int i, ret;
+	struct mt6685_rtc *rtc = dev_get_drvdata(dev);
+	int ret;
 	struct nvmem_config nvmem_cfg = {
 		.name = "mtk_rtc_nvmem",
 		.word_size = SPARE_REG_WIDTH,
@@ -1006,21 +1153,6 @@ static int mtk_rtc_set_spare(struct device *dev)
 		.priv = dev,
 	};
 
-	memcpy(tmp, rtc->data->spare_reg_fields, sizeof(tmp));
-
-	for (i = 0; i < SPARE_RG_MAX; i++) {
-		tmp[i].reg += rtc->addr_base;
-		rtc->spare[i] = devm_regmap_field_alloc(rtc->rtc_dev->dev.parent,
-							rtc->regmap,
-							tmp[i]);
-		if (IS_ERR(rtc->spare[i])) {
-			dev_err(rtc->rtc_dev->dev.parent,
-					"spare regmap field[%d] err= %ld\n",
-					i, PTR_ERR(rtc->spare[i]));
-			return PTR_ERR(rtc->spare[i]);
-		}
-	}
-
 	ret = rtc_nvmem_register(rtc->rtc_dev, &nvmem_cfg);
 	if (ret)
 		dev_err(rtc->rtc_dev->dev.parent, "nvmem register failed\n");
@@ -1030,42 +1162,52 @@ static int mtk_rtc_set_spare(struct device *dev)
 
 static int mtk_rtc_probe(struct platform_device *pdev)
 {
-	struct resource *res;
-	struct mt6397_chip *mt6397_chip = dev_get_drvdata(pdev->dev.parent);
-	struct mt6397_rtc *rtc;
+	struct mt6685_rtc *rtc;
+	struct device_node *np = pdev->dev.of_node;
 	int ret;
+
 #ifdef SUPPORT_PWR_OFF_ALARM
 	struct device_node *of_chosen = NULL;
 	struct tag_bootmode *tag = NULL;
 #endif
 
-	rtc = devm_kzalloc(&pdev->dev, sizeof(struct mt6397_rtc), GFP_KERNEL);
-	if (!rtc)
+	rtc = devm_kzalloc(&pdev->dev, sizeof(struct mt6685_rtc), GFP_KERNEL);
+	if (!rtc) {
+		//dev_err(&pdev->dev, "devm_kzalloc failed\n");
 		return -ENOMEM;
-
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -EINVAL;
-	rtc->addr_base = res->start;
+	}
 
 	rtc->data = of_device_get_match_data(&pdev->dev);
+	if (!rtc->data) {
+		dev_err(&pdev->dev, "of_device_get_match_data failed\n");
+		return -ENODEV;
+	}
 
-	rtc->irq = platform_get_irq(pdev, 0);
-	if (rtc->irq < 0)
-		return rtc->irq;
+	if (of_property_read_u32(pdev->dev.of_node, "base", &rtc->addr_base))
+		rtc->addr_base = RTC_DSN_ID;
 
-	rtc->regmap = mt6397_chip->regmap;
+	pr_notice("%s: rtc->addr_base =0x%x\n", __func__, rtc->addr_base);
+
 	mutex_init(&rtc->lock);
+	mutex_init(&rtc->clk_lock);
 
 	platform_set_drvdata(pdev, rtc);
 
 	rtc->rtc_dev = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtc->rtc_dev))
+	if (IS_ERR(rtc->rtc_dev)) {
+		dev_err(&pdev->dev, "Failed devm_rtc_allocate_device: %d\n", rtc->rtc_dev);
 		return PTR_ERR(rtc->rtc_dev);
+	}
+
+	rtc->regmap = dev_get_regmap(pdev->dev.parent, NULL);
+	if (!rtc->regmap) {
+		pr_err("%s: get regmap failed\n", __func__);
+		return -ENODEV;
+	}
 
 #ifdef SUPPORT_PWR_OFF_ALARM
-	mt6397_rtc_suspend_lock =
-		wakeup_source_register(NULL, "mt6397-rtc suspend wakelock");
+	mt6685_rtc_suspend_lock =
+		wakeup_source_register(NULL, "mt6685-rtc suspend wakelock");
 
 	of_chosen = of_find_node_by_path("/chosen");
 	if (!of_chosen)
@@ -1098,100 +1240,83 @@ static int mtk_rtc_probe(struct platform_device *pdev)
 	INIT_WORK(&rtc->work, mtk_rtc_work_queue);
 #endif
 
+	/* Obtain interrupt ID from DTS */
+	rtc->irq = of_irq_get(np, 0);
+	if (rtc->irq < 0) {
+		dev_err(&pdev->dev, "Failed to get irq(%d)\n", rtc->irq);
+		return rtc->irq;
+	}
+
 	ret = devm_request_threaded_irq(&pdev->dev, rtc->irq, NULL,
 					mtk_rtc_irq_handler_thread,
 					IRQF_ONESHOT | IRQF_TRIGGER_HIGH,
-					"mt6397-rtc", rtc);
-
+					"mt6685-rtc", rtc);
 	if (ret) {
 		dev_err(&pdev->dev, "Failed to request alarm IRQ: %d: %d\n",
 			rtc->irq, ret);
 		return ret;
 	}
 
+	/*Enable SCK_TOP rtc interrupt*/
+	rtc_update_bits(rtc, SCK_TOP_INT_CON0, EN_RTC_INTERRUPT, 1);
+
 	device_init_wakeup(&pdev->dev, 1);
 
 	rtc->rtc_dev->ops = &mtk_rtc_ops;
 
-	if (rtc->data->spare_reg_fields)
-		if (mtk_rtc_set_spare(&pdev->dev))
-			dev_err(&pdev->dev, "spare is not supported\n");
+	if (mtk_rtc_set_spare(&pdev->dev))
+		dev_err(&pdev->dev, "spare is not supported\n");
+
+	ret = rtc_register_device(rtc->rtc_dev);
+	if (ret) {
+		dev_err(&pdev->dev, "register rtc device failed\n");
+	};
+
+	enable_irq_wake(rtc->irq);
+
+	ret = rtc_read(rtc, HWCID, &hwid);
+	if (ret) {
+		hwid = MT6685_E3_HWID;
+		dev_err(&pdev->dev, "Failed to read mt6685 HWID\n");
+	};
+	hwid = hwid & HWCID_MASK;
 
 #ifdef SUPPORT_EOSC_CALI
-	if (rtc->data->cali_reg_fields)
-		if (mtk_rtc_config_eosc_cali(&pdev->dev))
-			dev_err(&pdev->dev, "config eosc cali failed\n");
-
+	rtc->cali_is_supported = true;
 #endif
 
-	return rtc_register_device(rtc->rtc_dev);
+	power_on_mclk(rtc);
+	power_down_mclk(rtc);
+	return 0;
 }
 
 static void mtk_rtc_shutdown(struct platform_device *pdev)
 {
+	struct mt6685_rtc *rtc = dev_get_drvdata(&pdev->dev);
+
+	/*Normal sequence power off when PON falling*/
+	rtc_write(rtc, TOP2_ELR1, 1);
 
 #ifdef SUPPORT_EOSC_CALI
 	mtk_rtc_enable_k_eosc(&pdev->dev);
 #endif
 }
 
-#if IS_ENABLED(CONFIG_PM_SLEEP)
-static int mt6397_rtc_suspend(struct device *dev)
-{
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
-
-	if (device_may_wakeup(dev))
-		enable_irq_wake(rtc->irq);
-
-	return 0;
-}
-
-static int mt6397_rtc_resume(struct device *dev)
-{
-	struct mt6397_rtc *rtc = dev_get_drvdata(dev);
-
-	if (device_may_wakeup(dev))
-		disable_irq_wake(rtc->irq);
-
-	return 0;
-}
-#endif
-
-static SIMPLE_DEV_PM_OPS(mt6397_pm_ops, mt6397_rtc_suspend,
-			mt6397_rtc_resume);
-
-static const struct mtk_rtc_data mt6358_rtc_data = {
-	.wrtgr = RTC_WRTGR_MT6358,
-	.spare_reg_fields = mtk_rtc_spare_reg_fields,
+static const struct mtk_rtc_data mt6685_rtc_data = {
+	.wrtgr = RTC_WRTGR_MT6685,
+	.unlock_version = UNLOCK_MT6685_SERIES,
 };
 
-static const struct mtk_rtc_data mt6397_rtc_data = {
-	.wrtgr = RTC_WRTGR_MT6397,
-};
-
-static const struct mtk_rtc_data mt6359p_rtc_data = {
-	.wrtgr = RTC_WRTGR_MT6358,
-	.spare_reg_fields	= mtk_rtc_spare_reg_fields,
-#ifdef SUPPORT_EOSC_CALI
-	.cali_reg_fields	= mt6359_cali_reg_fields,
-	.eosc_cali_version	= EOSC_CALI_MT6359P_SERIES,
-#endif
-};
-
-static const struct of_device_id mt6397_rtc_of_match[] = {
-	{ .compatible = "mediatek,mt6323-rtc", .data = &mt6397_rtc_data },
-	{ .compatible = "mediatek,mt6358-rtc", .data = &mt6358_rtc_data },
-	{ .compatible = "mediatek,mt6359p-rtc", .data = &mt6359p_rtc_data },
-	{ .compatible = "mediatek,mt6397-rtc", .data = &mt6397_rtc_data },
+static const struct of_device_id mt6685_rtc_of_match[] = {
+	{ .compatible = "mediatek,mt6685-rtc", .data = &mt6685_rtc_data },
 	{ }
 };
-MODULE_DEVICE_TABLE(of, mt6397_rtc_of_match);
+MODULE_DEVICE_TABLE(of, mt6685_rtc_of_match);
 
 static struct platform_driver mtk_rtc_driver = {
 	.driver = {
-		.name = "mt6397-rtc",
-		.of_match_table = mt6397_rtc_of_match,
-		.pm = &mt6397_pm_ops,
+		.name = "mt6685-rtc",
+		.of_match_table = mt6685_rtc_of_match,
 	},
 	.probe	= mtk_rtc_probe,
 	.shutdown = mtk_rtc_shutdown,
@@ -1200,5 +1325,5 @@ static struct platform_driver mtk_rtc_driver = {
 module_platform_driver(mtk_rtc_driver);
 
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Tianping Fang <tianping.fang@mediatek.com>");
-MODULE_DESCRIPTION("RTC Driver for MediaTek MT6397 PMIC");
+MODULE_AUTHOR("Mw Lin <Mw.Lin@mediatek.com>");
+MODULE_DESCRIPTION("RTC Driver for MediaTek MT6685 Clock IC");
