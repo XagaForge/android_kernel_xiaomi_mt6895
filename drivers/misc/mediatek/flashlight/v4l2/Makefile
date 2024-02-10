@@ -6,7 +6,7 @@ MTK_CUSTOM_PATH := $(srctree)/drivers/misc/mediatek
 subdir-ccflags-y += \
 	-I$(MTK_CUSTOM_PATH)/flashlight
 
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"xaga")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"xaga")
 subdir-ccflags-y += -DXAGA_CAM
 endif
 

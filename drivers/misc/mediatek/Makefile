@@ -86,31 +86,31 @@ obj-$(CONFIG_INTERCONNECT_MTK_MMQOS_COMMON) += mmqos/
 obj-$(CONFIG_MTK_TIMER_ACCURACY_TEST) += timer/
 obj-y += cam_log/
 subdir-ccflags-y += -D__XIAOMI_CAMERA__
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"matisse")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"matisse")
 subdir-ccflags-y += -DMATISSE_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"rubens")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"rubens")
 subdir-ccflags-y += -DRUBENS_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"xaga")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"xaga")
 subdir-ccflags-y += -DXAGA_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"pearl")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"pearl")
 subdir-ccflags-y += -DPEARL_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"plato")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"plato")
 subdir-ccflags-y += -DPLATO_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"daumier")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"daumier")
 subdir-ccflags-y += -DDAUMIER_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"yuechu")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"yuechu")
 subdir-ccflags-y += -DYUECHU_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"rembrandt")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"rembrandt")
 subdir-ccflags-y += -DREMBRANDT_CAM
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"aristotle")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"aristotle")
 subdir-ccflags-y += -DARISTOTLE_CAM
 endif
 obj-$(CONFIG_MI_CAMLOG) += cam_log/
