@@ -22,8 +22,8 @@
 #include <linux/regulator/driver.h>
 #include <linux/workqueue.h>
 
-#include "../xm_charge/xmc_voter.h"
-#include "../xm_charge/xmc_ops.h"
+#include "../../../xm_charge/xmc_voter.h"
+#include "../../../xm_charge/xmc_ops.h"
 #include "charger_class.h"
 #include "mtk_charger.h"
 

@@ -20,7 +20,7 @@
 #include <linux/workqueue.h>
 
 #include "extcon-mtk-usb.h"
-#include "../../../power/supply_new/mtk_charger.h"
+#include "../../../power/supply/mediatek/plato/mtk_charger.h"
 
 
 #if IS_ENABLED(CONFIG_TCPC_CLASS)
