@@ -37,19 +37,19 @@ comma := ,
 empty :=
 space := $(empty) $(empty)
 
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"matisse")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"matisse")
 BUILD_PROJECT_NAME := matisse
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"rubens")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"rubens")
 BUILD_PROJECT_NAME := rubens
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"xaga")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"xaga")
 BUILD_PROJECT_NAME := xaga
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"pearl")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"pearl")
 BUILD_PROJECT_NAME := pearl
 endif
-ifeq ($(CONFIG_BUILD_XIAOMI_CAMERA_IMAGE_NAMES),"plato")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"plato")
 BUILD_PROJECT_NAME := plato
 endif
 
