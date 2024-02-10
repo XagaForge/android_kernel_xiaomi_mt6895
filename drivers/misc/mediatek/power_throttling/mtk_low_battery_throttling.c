@@ -101,7 +101,7 @@ static ssize_t low_battery_protect_ut_store(
 
 	dev_info(dev, "[%s]\n", __func__);
 
-	if (sscanf(buf, "%20s %u\n", cmd, &val) != 2) {
+	if (sscanf(buf, "%19s %u\n", cmd, &val) != 2) {
 		dev_info(dev, "parameter number not correct\n");
 		return -EINVAL;
 	}
@@ -146,7 +146,7 @@ static ssize_t low_battery_protect_stop_store(struct device *dev,
 
 	dev_info(dev, "[%s]\n", __func__);
 
-	if (sscanf(buf, "%20s %u\n", cmd, &val) != 2) {
+	if (sscanf(buf, "%19s %u\n", cmd, &val) != 2) {
 		dev_info(dev, "parameter number not correct\n");
 	}
 
