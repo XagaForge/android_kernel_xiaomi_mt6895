@@ -148,7 +148,7 @@ static ssize_t bp_thl_ut_store(
 
 	pr_info("[%s]\n", __func__);
 
-	if (sscanf(buf, "%20s %u\n", cmd, &val) != 2) {
+	if (sscanf(buf, "%19s %u\n", cmd, &val) != 2) {
 		dev_info(dev, "parameter number not correct\n");
 		return -EINVAL;
 	}
@@ -186,7 +186,7 @@ static ssize_t bp_thl_stop_store(
 
 	pr_info("[%s]\n", __func__);
 
-	if (sscanf(buf, "%20s %u\n", cmd, &val) != 2) {
+	if (sscanf(buf, "%19s %u\n", cmd, &val) != 2) {
 		dev_info(dev, "parameter number not correct\n");
 	}
 

@@ -207,7 +207,7 @@ static ssize_t battery_oc_protect_ut_write(struct file *fp,
 		return ret;
 	}
 
-	if (sscanf(buf, "%20s %u\n", cmd, &val) != 2) {
+	if (sscanf(buf, "%19s %u\n", cmd, &val) != 2) {
 		dev_info(priv->dev, "parameter number not correct\n");
 		kfree(buf);
 		return -EINVAL;
@@ -271,7 +271,7 @@ static ssize_t battery_oc_protect_stop_write(struct file *fp,
 		return ret;
 	}
 
-	if (sscanf(buf, "%20s %u\n", cmd, &val) != 2) {
+	if (sscanf(buf, "%19s %u\n", cmd, &val) != 2) {
 		dev_info(priv->dev, "parameter number not correct\n");
 	}
 
