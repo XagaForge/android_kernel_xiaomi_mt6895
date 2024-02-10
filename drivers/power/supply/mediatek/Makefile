@@ -29,7 +29,7 @@ obj-$(CONFIG_XMEXT_TI_GAUGE) += bq28z610.o
 obj-$(CONFIG_XMEXT_CHG_PUMP) += sc8561.o
 obj-$(CONFIG_XMEXT_SC8551A_CHG_PUMP) += sc8551.o
 obj-$(CONFIG_XMEXT_LN8000_CHG_PUMP) += ln8000_charger.o
-ifeq ($(CONFIG_CHARGE_PROJECT),"DAUMIER")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"daumier")
 obj-$(CONFIG_XM_PD_MANAGER) += pd_single_cp_manager.o
 else
 obj-$(CONFIG_XM_PD_MANAGER) += pd_cp_manager.o

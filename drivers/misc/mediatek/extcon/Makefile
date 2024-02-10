@@ -2,7 +2,7 @@
 
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/typec/tcpc/inc
 
-ifeq ($(CONFIG_CHARGE_PROJECT),"PLATO")
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),"plato")
 obj-$(CONFIG_EXTCON_MTK_USB) += extcon-mtk-usb-new.o
 else
 obj-$(CONFIG_EXTCON_MTK_USB) += extcon-mtk-usb.o
