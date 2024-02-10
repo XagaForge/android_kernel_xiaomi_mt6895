@@ -793,7 +793,7 @@ static ssize_t mt_pbm_manual_mode_proc_write
 		return 0;
 	desc[len] = '\0';
 
-	if (sscanf(desc, "%20s %d %d %d %d %d %d", cmd, &manual_mode, &loading_dlpt,
+	if (sscanf(desc, "%19s %d %d %d %d %d %d", cmd, &manual_mode, &loading_dlpt,
 		&loading_md1, &loading_cpu, &loading_gpu, &loading_flash) != 7) {
 		pr_notice("parameter number not correct\n");
 		return -EPERM;
@@ -835,7 +835,7 @@ static ssize_t mt_pbm_stop_proc_write
 		return 0;
 	desc[len] = '\0';
 
-	if (sscanf(desc, "%20s %d", cmd, &stop) != 2) {
+	if (sscanf(desc, "%19s %d", cmd, &stop) != 2) {
 		pr_notice("parameter number not correct\n");
 		return -EPERM;
 	}
