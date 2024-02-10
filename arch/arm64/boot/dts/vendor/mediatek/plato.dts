@@ -1,0 +1,2 @@
+#include "plato-mt6895.dtsi"
+#include <plato/cust.dtsi>
