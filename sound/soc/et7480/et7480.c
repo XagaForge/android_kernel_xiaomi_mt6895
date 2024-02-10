@@ -20,7 +20,7 @@
  */
 #include "../typec/tcpc/inc/tcpci_core.h"
 #include "../typec/tcpc/inc/tcpm.h"
-#include "../../drivers/power/supply/charger_class.h"
+#include "../../drivers/power/supply/mediatek/charger_class.h"
 
 #define USE_POWER_SUPPLY_NOTIFIER    0
 #define USE_TCPC_NOTIFIER            1
