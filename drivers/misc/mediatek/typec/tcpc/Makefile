@@ -1,5 +1,10 @@
 subdir-ccflags-y += -Wall -Werror
 subdir-ccflags-y += -I$(srctree)/drivers/power/supply/
+ifeq ($(CONFIG_TARGET_PRODUCT_PLATO),y)
+subdir-ccflags-y += -I$(srctree)/drivers/power/supply/mediatek/plato/
+else
+subdir-ccflags-y += -I$(srctree)/drivers/power/supply/mediatek/
+endif
 subdir-ccflags-y += -I$(srctree)/drivers/misc/mediatek/rt-regmap/
 subdir-ccflags-y += -I$(srctree)/drivers/mfd/
 
