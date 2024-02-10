@@ -655,7 +655,7 @@ static ssize_t md_sensor_info_store(struct kobject *kobj,
 	int len = 0, num = 0, val = 0, i = 0;
 	struct md_thermal_sensor_t *ts_info;
 
-	if (sscanf(buf, "%20s %d%n", info_type_s, &num, &len) != 2) {
+	if (sscanf(buf, "%19s %d%n", info_type_s, &num, &len) != 2) {
 		pr_info("%s: wrong scan info_type and num %s\n", __func__, buf);
 		return -EINVAL;
 	}
@@ -725,7 +725,7 @@ static ssize_t md_actuator_info_store(struct kobject *kobj,
 	int len = 0, num = 0, val = 0, i = 0;
 	struct md_thermal_actuator_t *ta_info;
 
-	if (sscanf(buf, "%20s %d%n", info_type_s, &num, &len) != 2) {
+	if (sscanf(buf, "%19s %d%n", info_type_s, &num, &len) != 2) {
 		pr_info("%s: wrong scan info_type and num %s\n", __func__, buf);
 		return -EINVAL;
 	}
@@ -936,7 +936,7 @@ static ssize_t emul_temp_write(struct file *flip,
 	}
 	buf[cnt] = '\0';
 
-	if (sscanf(buf, "%10s %d", target, &temp) != 2) {
+	if (sscanf(buf, "%9s %d", target, &temp) != 2) {
 		dev_info(tm_data.dev, "invalid input for emul temp\n");
 		ret = -EINVAL;
 		goto err;
