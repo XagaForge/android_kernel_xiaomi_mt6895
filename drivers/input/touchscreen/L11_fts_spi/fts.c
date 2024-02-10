@@ -503,7 +503,7 @@ static ssize_t fts_fwupdate_store(struct device *dev,
 	mode[1] = 1;
 
 	/* reading out firmware upgrade parameters */
-	sscanf(buf, "%100s %d %d", path, &mode[0], &mode[1]);
+	sscanf(buf, "%99s %d %d", path, &mode[0], &mode[1]);
 	logError(1, "%s %s: mode = %s\n", tag, __func__, path);
 
 	ret = flashProcedure(path, mode[0], mode[1]);
