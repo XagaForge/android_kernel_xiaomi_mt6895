@@ -597,9 +597,9 @@ ifneq ($(GCC_TOOLCHAIN),)
 CLANG_FLAGS	+= --gcc-toolchain=$(GCC_TOOLCHAIN)
 endif
 ifeq ($(LLVM_IAS),1)
-CLANG_FLAGS	+= -fintegrated-as
+CLANG_FLAGS	+= -integrated-as
 else
-CLANG_FLAGS	+= -fno-integrated-as
+CLANG_FLAGS	+= -no-integrated-as
 endif
 CLANG_FLAGS	+= -Werror=unknown-warning-option
 KBUILD_CPPFLAGS	+= $(CLANG_FLAGS)
