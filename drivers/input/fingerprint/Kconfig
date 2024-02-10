@@ -79,11 +79,5 @@ config TEMP_FP_FLAG
 	help
 	  Temp To Disable Fp Unblank Function
 
-config BUILD_PRODUCT_NAME
-	string "build product for L11/L11A/L16/M11R/L12A/L2M/M9/L16S/M12A"
-	default "matisse"
-	help
-	  build product for L11/L11A/M11R/L16/L12A/L2M/M9/L16S/M12A
-
 endif
 endmenu
