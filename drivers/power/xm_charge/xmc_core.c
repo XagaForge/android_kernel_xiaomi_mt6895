@@ -409,7 +409,7 @@ static int xmc_probe(struct platform_device *pdev)
 
 	xmc_info("[XMC_PROBE] XMC probe start\n");
 
-	if (!strncmp(CONFIG_CHARGE_PROJECT, "PISSARRO", 8) || !strncmp(CONFIG_CHARGE_PROJECT, "OTHER_COPACKAGE_PROJECT", 23)) {
+	if (!strncmp(CONFIG_BUILD_PRODUCT_NAME, "pissarro", 8) || !strncmp(CONFIG_BUILD_PRODUCT_NAME, "OTHER_COPACKAGE_PROJECT", 23)) {
 		xmc_parse_copackage_info();
 
 		of_id = of_match_device(xmc_of_match, &pdev->dev);
