@@ -25,6 +25,6 @@ subdir-ccflags-y += $(ccflags-y)
 
 ifeq ($(CONFIG_MALI_MEMORY_GROUP_MANAGER), y)
 #obj-m := memory_group_manager.o
-obj-m += mali_mgm_$(MTK_PLATFORM_VERSION).o
-mali_mgm_$(MTK_PLATFORM_VERSION)-y := memory_group_manager.o
+obj-m += mali_mgm.o
+mali_mgm-y := memory_group_manager.o
 endif
