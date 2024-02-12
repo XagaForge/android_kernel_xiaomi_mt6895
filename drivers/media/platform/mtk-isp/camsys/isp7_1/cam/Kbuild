@@ -17,10 +17,10 @@ subdir-ccflags-y += -I$(srctree)/drivers/media/platform/mtk-isp \
 ifneq ($(wildcard $(srctree)/include/dt-bindings/memory/mt6983-larb-port.h),)
   subdir-ccflags-y += -DCAMSYS_TF_DUMP_71_1
 endif
-ifeq ($(BUILD_TARGET_PRODUCT),$(filter $(BUILD_TARGET_PRODUCT), xaga vnd_xaga))
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),xaga)
 subdir-ccflags-y +=-DXAGA_CAM
 endif
-ifeq ($(BUILD_TARGET_PRODUCT),$(filter $(BUILD_TARGET_PRODUCT), pearl vnd_pearl))
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME),pearl)
 subdir-ccflags-y +=-DPEARL_CAM
 endif
 
