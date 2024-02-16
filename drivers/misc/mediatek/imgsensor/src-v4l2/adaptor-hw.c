@@ -424,7 +424,6 @@ int adaptor_hw_power_off(struct adaptor_ctx *ctx)
 	}
 	ctx->power_refcnt = 0;
 	ctx->is_sensor_inited = 0;
-	ctx->is_sensor_scenario_inited = 0;
 #endif
 	return do_hw_power_off(ctx);
 }

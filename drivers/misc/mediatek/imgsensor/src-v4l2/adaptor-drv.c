@@ -231,12 +231,11 @@ static void control_sensor(struct adaptor_ctx *ctx)
 	MSDK_SENSOR_EXPOSURE_WINDOW_STRUCT image_window;
 	MSDK_SENSOR_CONFIG_STRUCT sensor_config_data;
 
-	if (!ctx->is_sensor_scenario_inited && !ctx->is_streaming) {
+	if (!ctx->is_streaming) {
 		subdrv_call(ctx, control,
 				ctx->cur_mode->id,
 				&image_window,
 				&sensor_config_data);
-		ctx->is_sensor_scenario_inited = 1;
 	}
 	restore_ae_ctrl(ctx);
 }
@@ -245,29 +244,11 @@ static int set_sensor_mode(struct adaptor_ctx *ctx,
 		struct sensor_mode *mode, char update_ctrl_defs)
 {
 	s64 min, max, def;
-#ifdef __XIAOMI_CAMERA__
-	u32 update_seamless = 0;
-	union feature_para para;
-	u32 len;
-#endif
 
-	if (ctx->cur_mode == mode) {
-#ifdef __XIAOMI_CAMERA__
-		para.u32[0] = 0;
-		subdrv_call(ctx, feature_control,
-			XIAOMI_FEATURE_GET_NEED_UPDATE_SEAMLESS_SETTING,
-			para.u8, &len);
-		update_seamless = para.u32[0];
-		if (update_seamless)
-			ctx->is_sensor_scenario_inited = 0;
-#endif
-		if (update_ctrl_defs)
-			control_sensor(ctx);
+	if (ctx->cur_mode == mode)
 		return 0;
-	}
 
 	ctx->cur_mode = mode;
-	ctx->is_sensor_scenario_inited = 0;
 
 	subdrv_call(ctx, get_info,
 			mode->id,
@@ -291,9 +272,6 @@ static int set_sensor_mode(struct adaptor_ctx *ctx,
 		/* max fps */
 		max = def = mode->max_framerate;
 		__v4l2_ctrl_modify_range(ctx->max_fps, 1, max, 1, def);
-
-		/* init sensor scenario setting */
-		control_sensor(ctx);
 	}
 
 	dev_dbg(ctx->dev, "select %dx%d@%d %dx%d px %d\n",
@@ -687,7 +665,6 @@ static int imgsensor_runtime_suspend(struct device *dev)
 
 	/* clear flags once power-off */
 	ctx->is_sensor_inited = 0;
-	ctx->is_sensor_scenario_inited = 0;
 
 	return adaptor_hw_power_off(ctx);
 }
