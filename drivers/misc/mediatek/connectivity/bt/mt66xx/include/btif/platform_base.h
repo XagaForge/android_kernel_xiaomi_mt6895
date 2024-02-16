@@ -198,7 +198,7 @@ static void inline bt_dump_memory8(uint8_t *buf, uint32_t len)
 
 }
 
-static inline const char* fwp_get_flavor_bin()
+static inline const char* fwp_get_flavor_bin(void)
 {
 	#define TARGET_KEY "flavor_bin"
 	const char *str = NULL;
