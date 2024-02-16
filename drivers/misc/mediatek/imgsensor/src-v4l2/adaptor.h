@@ -127,7 +127,6 @@ struct adaptor_ctx {
 	/* flags */
 	unsigned int is_streaming:1;
 	unsigned int is_sensor_inited:1;
-	unsigned int is_sensor_scenario_inited:1;
 
 	int open_refcnt;
 	int power_refcnt;
