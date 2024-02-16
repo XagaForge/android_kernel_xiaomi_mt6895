@@ -996,7 +996,7 @@ static bool ged_dvfs_policy(
 
 	int loading_mode;
 	int minfreq_idx;
-	int idx_diff;
+	int idx_diff = 0;
 
 	if (ui32GPUFreq < 0 || ui32GPUFreq > ged_get_min_oppidx())
 		return GED_FALSE;
