@@ -1455,7 +1455,7 @@ int nq_init(void)
 	#if defined(PLAT_DEFAULT_TEE_AFFINITY_MASK)
 	l_ctx.default_affinity_mask = PLAT_DEFAULT_TEE_AFFINITY_MASK;
 	#else
-	l_ctx.default_affinity_mask = (1 << nr_cpu_ids) - 1;
+	l_ctx.default_affinity_mask = (1UL << nr_cpu_ids) - 1;
 	#endif
 
 	mc_dev_devel("Default affinity : %lx", l_ctx.default_affinity_mask);
