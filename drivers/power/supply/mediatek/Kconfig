@@ -64,6 +64,13 @@ config MTK_CHARGER
 	  maintains charging status.
 	  Say no if not using MediaTek charging driver.
 
+config MTK_KERNEL_POWER_OFF_CHARGING
+	bool "Mediatek Kernel Power Off Charging"
+	depends on MTK_CHARGER
+	help
+	  Say Y if you are using the kpoc_charger daemon for offline charging.
+	  If you are not, say N.
+
 if !TARGET_PRODUCT_PLATO
 config XMUSB350_CHARGER_DET
 	tristate "xmusb350 qc charger type detect"

@@ -2914,6 +2914,7 @@ static bool mtk_is_charger_on(struct mtk_charger *info)
 	return true;
 }
 
+#if IS_ENABLED(CONFIG_MTK_KERNEL_POWER_OFF_CHARGING)
 static void charger_send_kpoc_uevent(struct mtk_charger *info)
 {
 	static bool first_time = true;
@@ -2930,6 +2931,7 @@ static void charger_send_kpoc_uevent(struct mtk_charger *info)
 		}
 	}
 }
+#endif
 
 void set_soft_reset_status(int val)
 {
@@ -2948,6 +2950,7 @@ int get_soft_reset_status(void)
 }
 EXPORT_SYMBOL(get_soft_reset_status);
 
+#if IS_ENABLED(CONFIG_MTK_KERNEL_POWER_OFF_CHARGING)
 static void kpoc_power_off_check(struct mtk_charger *info)
 {
 	unsigned int boot_mode = info->bootmode;
@@ -2968,6 +2971,7 @@ static void kpoc_power_off_check(struct mtk_charger *info)
 			msleep(3500);
 		}
 	}
+
 	/* 8 = KERNEL_POWER_OFF_CHARGING_BOOT */
 	/* 9 = LOW_POWER_OFF_CHARGING_BOOT */
 	if (boot_mode == 8 || boot_mode == 9) {
@@ -2998,6 +3002,7 @@ static void kpoc_power_off_check(struct mtk_charger *info)
 		charger_send_kpoc_uevent(info);
 	}
 }
+#endif
 
 static void charger_status_check(struct mtk_charger *info)
 {
@@ -3352,7 +3357,9 @@ static int charger_routine_thread(void *arg)
 		check_battery_exist(info);
 		check_dynamic_mivr(info);
 		charger_check_status(info);
+#if IS_ENABLED(CONFIG_MTK_KERNEL_POWER_OFF_CHARGING)
 		kpoc_power_off_check(info);
+#endif
 
 		if (is_disable_charger(info) == false &&
 			is_charger_on == true &&
