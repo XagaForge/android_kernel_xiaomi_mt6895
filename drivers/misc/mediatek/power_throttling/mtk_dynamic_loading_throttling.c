@@ -393,10 +393,11 @@ static int dlpt_notify_handler(void *unused)
 
 		wait_event_interruptible(dlpt.notify_waiter,
 					 (dlpt.notify_flag == true));
-		__pm_stay_awake(dlpt.notify_ws);
 		mutex_lock(&dlpt.notify_lock);
 		if (dlpt.suspend_flag)
 			goto bypass;
+
+		__pm_stay_awake(dlpt.notify_ws);
 
 		cur_ui_soc = dlpt_get_uisoc();
 
@@ -428,9 +429,9 @@ static int dlpt_notify_handler(void *unused)
 			dlpt_set_shutdown_condition();
 			pr_info("[DLPT] notify battery SOC=0 to power off.\n");
 		}
+		__pm_relax(dlpt.notify_ws);
 bypass:
 		mutex_unlock(&dlpt.notify_lock);
-		__pm_relax(dlpt.notify_ws);
 
 		mod_timer(&dlpt.notify_timer, jiffies + dlpt_notify_interval);
 
