@@ -1208,7 +1208,7 @@ static void mt6375_chg_bc12_work_func(struct work_struct *work)
 		case PORT_STAT_SDP:
 			ddata->psy_desc.type = POWER_SUPPLY_TYPE_USB;
 			ddata->psy_usb_type = POWER_SUPPLY_USB_TYPE_SDP;
-#if (CONFIG_TARGET_PRODUCT_PEARL) || (CONFIG_TARGET_PRODUCT_RUBENS)
+#if defined(CONFIG_TARGET_PRODUCT_PEARL) || defined(CONFIG_TARGET_PRODUCT_RUBENS)
 			if (ddata->recheck_count <= 4) {
 				ddata->recheck_count++;
 				dev_err(ddata->dev, "%s: [MT6375_CHG]rerun BC1.2 recheck_count= %d\n", __func__,ddata->recheck_count);
