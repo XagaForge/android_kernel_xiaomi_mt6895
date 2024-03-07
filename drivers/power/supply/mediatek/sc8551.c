@@ -1024,6 +1024,7 @@ static int sc8551_init_device(struct sc8551 *chip)
 	return ret;
 }
 
+#if defined(CONFIG_TARGET_PRODUCT_YUECHU)
 static int try_to_find_i2c_regess(struct i2c_client *client)
 {
 	uint8_t reg_set[] = {0x65, 0x66};
@@ -1057,6 +1058,7 @@ static int try_to_find_i2c_regess(struct i2c_client *client)
 
 	return 0;
 }
+#endif
 
 static int sc8551_probe(struct i2c_client *client, const struct i2c_device_id *id)
 {
