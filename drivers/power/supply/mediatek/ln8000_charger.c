@@ -40,6 +40,9 @@
 #include "charger_class.h"
 #include "mtk_charger.h"
 #include "ln8000_charger.h"
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+#include "../../../misc/hwid/hwid.h"
+#endif
 //#include <mt-plat/charger_type.h>
 
 #define LN8000_DUAL_CONFIG
@@ -2228,6 +2231,21 @@ static int ln8000_probe(struct i2c_client *client, const struct i2c_device_id *i
 {
 	struct ln8000_info *info;
 	int ret = 0;
+
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	const char * buf = get_hw_sku();
+	char *xaga = NULL;
+	char *xagapro = strnstr(buf, "xagapro", strlen(buf));
+	if(!xagapro)
+		xaga = strnstr(buf, "xaga", strlen(buf));
+	if(xaga)
+		dev_err(&client->dev, "%s ++\n", __func__);
+	else if(xagapro){
+		return -ENODEV;
+	}else{
+		return -ENODEV;
+	}
+#endif
 
 	dev_err(&client->dev, "ln8000 probe start!\n");
 	/* detect device on connected i2c bus */
