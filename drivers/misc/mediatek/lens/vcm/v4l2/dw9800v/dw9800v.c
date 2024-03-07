@@ -111,7 +111,7 @@ static int dw9800v_set_position(struct dw9800v_device *dw9800v, u16 val)
 	struct i2c_client *client = v4l2_get_subdevdata(&dw9800v->sd);
 	int dac_addr   = DW9800V_SET_POSITION_ADDR;
 	int data_shift = 0;
-#if (defined (MATISSE_CAM) || defined (PLATO_CAM))
+#if (defined (MATISSE_CAM) || defined (PLATO_CAM) || defined (XAGA_CAM))
 	dac_addr   = (g_vendor_id == 0x03/*semco*/) ?\
 		AK7314_SET_POSITION_ADDR : DW9800V_SET_POSITION_ADDR;
 	data_shift = (g_vendor_id == 0x03/*semco*/) ? 6 : 0;
