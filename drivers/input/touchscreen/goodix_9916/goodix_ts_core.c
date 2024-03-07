@@ -3894,6 +3894,7 @@ static struct platform_driver goodix_ts_driver = {
 static int __init goodix_ts_core_init(void)
 {
 	int ret;
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PLATO)
 	int gpio_191;
 
 	gpio_direction_input(L12A_ID_DET);
@@ -3905,6 +3906,7 @@ static int __init goodix_ts_core_init(void)
 		pr_info("TP is fts");
 		return 0;
 	}
+#endif
 
 	pr_info("Core layer init:%s", GOODIX_DRIVER_VERSION);
 #ifdef CONFIG_TOUCHSCREEN_GOODIX_BRL_SPI
