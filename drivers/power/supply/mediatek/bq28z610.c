@@ -33,6 +33,9 @@
 #include <linux/of_gpio.h>
 #include "bq28z610.h"
 #include "mtk_battery.h"
+#ifdef CONFIG_TARGET_PRODUCT_XAGA
+#include "../../../misc/hwid/hwid.h"
+#endif
 
 enum product_name {
 	XAGA_NO,
@@ -2426,6 +2429,14 @@ static int fg_probe(struct i2c_client *client, const struct i2c_device_id *id)
 
 #if defined(CONFIG_TARGET_PRODUCT_DAUMIER)
 	product_name=DAUMIER;
+#endif
+
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	const char *sku = get_hw_sku();
+	if (!strncmp(sku, "xagapro", strlen("xagapro")))
+		product_name = XAGAPRO;
+	else if (!strncmp(sku, "xaga", strlen("xaga")))
+		product_name = XAGA;
 #endif
 
 	fg_info("FG probe enter\n");
