@@ -68,7 +68,10 @@
 #include "bq28z610.h"
 #include "pmic_voter.h"
 
-#include "../../misc/mediatek/typec/tcpc/inc/tcpci.h"
+#include "../../../misc/mediatek/typec/tcpc/inc/tcpci.h"
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+#include "../../../misc/hwid/hwid.h"
+#endif
 
 static struct platform_driver mtk_charger_driver;
 static struct mtk_charger *pinfo = NULL;
@@ -4973,6 +4976,32 @@ static int mtk_charger_probe(struct platform_device *pdev)
 	struct netlink_kernel_cfg cfg = {
 		.input = chg_nl_data_handler,
 	};
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	const struct of_device_id *of_id;
+	int project_no = 0;
+	char *xaga = NULL;
+	const char * buf = get_hw_sku();
+	char *xagapro = strnstr(buf, "xagapro", strlen(buf));
+	if(!xagapro)
+		xaga = strnstr(buf, "xaga", strlen(buf));
+	if(xagapro){
+		project_no = 1;
+	}
+	else if(xaga){
+		project_no = 2;
+	}
+	else{
+		project_no = 3;
+	}
+
+  	of_id = of_match_device(mtk_charger_of_match, &pdev->dev);
+        pdev->id_entry = of_id->data;
+	if (pdev->id_entry->driver_data == project_no) {
+		chr_err("[ll] %s ++\n", __func__);
+	} else {
+          	return -ENODEV;
+	}
+#endif
 	chr_err("%s: starts\n", __func__);
 
 	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
