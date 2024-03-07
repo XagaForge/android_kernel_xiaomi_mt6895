@@ -51,6 +51,7 @@
 #include "adapter_class.h"
 #include "mtk_charger.h"
 
+#include "../../../misc/hwid/hwid.h"
 
 #define PHY_MODE_DPDMPULLDOWN_SET 3
 #define PHY_MODE_DPDMPULLDOWN_CLR 4
@@ -1176,6 +1177,9 @@ static int adapter_parse_dt(struct mtk_pd_adapter_info *info,
 		u32 boot_mode;
 		u32 boot_type;
 	} *tag;
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	const char *sku = get_hw_sku();
+#endif
 	pr_notice("%s\n", __func__);
 
 	if (!np) {
@@ -1208,6 +1212,12 @@ static int adapter_parse_dt(struct mtk_pd_adapter_info *info,
 	info->force_cv = of_property_read_bool(np, "force_cv");
 	of_property_read_u32(np, "ita_min", &info->ita_min);
 	of_property_read_u32(np, "product_index", &product_name);
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	if (!strncmp(sku, "xagapro", strlen("xagapro")))
+		product_name = XAGAPRO;
+	else if (!strncmp(sku, "xaga", strlen("xaga")))
+		product_name = XAGA;
+#endif
 	pr_notice("%s: product_index = %d\n", __func__, product_name);
 	return 0;
 }
