@@ -396,7 +396,7 @@ static void handle_step_charge(struct mtk_charger *info)
 static void monitor_thermal_limit(struct mtk_charger *info)
 {
 	int thermal_level = 0;
-	int iterm_effective = get_effective_result(info->iterm_votable);
+	//int iterm_effective = get_effective_result(info->iterm_votable);
 	if (info->thermal_level < 0)
 		thermal_level = -1 - info->thermal_level;
 	else
@@ -696,9 +696,9 @@ static void check_charge_data(struct mtk_charger *info)
 {
 	union power_supply_propval pval = {0,};
 	int ret = 0, val = 0;
-        static int pre_tbat = 0;
 	int charge_status = 0;
 #if defined(CONFIG_TARGET_PRODUCT_YUECHU)
+        static int pre_tbat = 0;
         bool cp_master_en= true;
         bool cp_slave_en = true;
         int target_cv = get_effective_result(info->fv_votable);
