@@ -15,3 +15,6 @@ obj-$(CONFIG_LEDS_TRIGGER_PANIC)	+= ledtrig-panic.o
 obj-$(CONFIG_LEDS_TRIGGER_NETDEV)	+= ledtrig-netdev.o
 obj-$(CONFIG_LEDS_TRIGGER_PATTERN)	+= ledtrig-pattern.o
 obj-$(CONFIG_LEDS_TRIGGER_AUDIO)	+= ledtrig-audio.o
+
+ccflags-y += -I$(srctree)/drivers/gpu/drm/mediatek/mediatek_v2
+obj-$(CONFIG_LEDS_TRIGGER_BACKLIGHT_DRM)	+= ledtrig-backlight-drm.o
