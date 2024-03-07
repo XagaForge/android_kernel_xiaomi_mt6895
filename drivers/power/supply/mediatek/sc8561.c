@@ -26,6 +26,7 @@
 #include "mtk_charger.h"
 #include "sc8561_reg.h"
 #include "ln8410_reg.h"
+#include "../../../misc/hwid/hwid.h"
 
 static int log_level = 2;
 
@@ -2398,6 +2399,20 @@ static int sc8561_probe(struct i2c_client *client,
 	struct device *dev = &client->dev;
 	struct sc8561_device *bq;
 	int ret = 0;
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	const char * buf = get_hw_sku();
+	char *xaga = NULL;
+	char *xagapro = strnstr(buf, "xagapro", strlen(buf));
+	if(!xagapro)
+		xaga = strnstr(buf, "xaga", strlen(buf));
+	if(xagapro)
+		bq_err("%s ++\n", __func__);
+	else if(xaga) {
+		return -ENODEV;
+	} else {
+		return -ENODEV;
+	}
+#endif
 	bq = devm_kzalloc(dev, sizeof(*bq), GFP_KERNEL);
 	if (!bq)
 		return -ENOMEM;
