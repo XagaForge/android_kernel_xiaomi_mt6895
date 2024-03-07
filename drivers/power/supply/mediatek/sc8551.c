@@ -34,6 +34,7 @@
 #include "mtk_charger.h"
 #include "sc8561_reg.h"
 #include "sc8551.h"
+#include "../../../misc/hwid/hwid.h"
 
 enum sc8551_driver_data {
 	SC8551_STANDALONE,
@@ -1065,6 +1066,21 @@ static int sc8551_probe(struct i2c_client *client, const struct i2c_device_id *i
 	struct device *dev = &client->dev;
 	struct sc8551 *chip;
 	int ret = 0;
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	const char * buf = get_hw_sku();
+	char *xaga = NULL;
+	char *xagapro = strnstr(buf, "xagapro", strlen(buf));
+	if(!xagapro)
+		xaga = strnstr(buf, "xaga", strlen(buf));
+	if(xaga)
+		sc_err("%s ++\n", __func__);
+	else if(xagapro){
+		return -ENODEV;
+	}
+	else{
+		return -ENODEV;
+	}
+#endif
 	/* detect device on connected i2c bus */
 	ret = i2c_smbus_read_byte_data(client, SC8551_PART_INFO_REG);
 	if (IS_ERR_VALUE((unsigned long)ret)) {
