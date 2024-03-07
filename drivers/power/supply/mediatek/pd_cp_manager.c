@@ -27,7 +27,7 @@
 #include "pd_cp_manager.h"
 #include "sc8561_reg.h"
 #include "bq28z610.h"
-
+#include "../../../misc/hwid/hwid.h"
 
 static struct platform_driver pdm_driver;
 enum pdm_sm_state {
@@ -1416,8 +1416,32 @@ static int pdm_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct usbpd_pm *pdpm;
 	const struct of_device_id *of_id;
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	const char * buf = get_hw_sku();
+	int project_no = 0;
+	char *xaga = NULL;
+	char *xagapro = strnstr(buf, "xagapro", strlen(buf));
+	if(!xagapro)
+		xaga = strnstr(buf, "xaga", strlen(buf));
+	if(xagapro){
+		project_no = 1;
+	}
+	else if(xaga){
+		project_no = 2;
+	}
+	else{
+		project_no = 3;
+	}
+#endif
 	of_id = of_match_device(pdm_of_match, &pdev->dev);
 	pdev->id_entry = of_id->data;
+#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+	if (pdev->id_entry->driver_data == project_no) {
+		pdm_err("[ll] %s ++\n", __func__);
+	} else {
+		return -ENODEV;
+	}
+#endif
 	pdpm = kzalloc(sizeof(struct usbpd_pm), GFP_KERNEL);
 	if (!pdpm)
 		return -ENOMEM;
