@@ -21,6 +21,7 @@
 #include <linux/of_graph.h>
 #include <linux/platform_device.h>
 #include <linux/of_gpio.h>
+#include "../mediatek/mediatek_v2/mi_disp/mi_dsi_panel.h"
 #include "../mediatek/mediatek_v2/mi_disp/mi_panel_ext.h"
 #include "../mediatek/mediatek_v2/mtk_drm_crtc.h"
 #ifdef CONFIG_MI_DISP
