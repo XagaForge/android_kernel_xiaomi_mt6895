@@ -199,7 +199,9 @@ enum bpf_prog_type {
 	BPF_PROG_TYPE_EXT,
 	BPF_PROG_TYPE_LSM,
 	BPF_PROG_TYPE_SK_LOOKUP,
+#ifndef __GENKSYMS__ // ANDROID CRC kabi preservation hack
 	BPF_PROG_TYPE_FUSE,
+#endif
 };
 
 enum bpf_attach_type {
