@@ -82,6 +82,7 @@ static atomic_t balance_mode = ATOMIC_INIT(0);
 static atomic_t modem_limit = ATOMIC_INIT(0);
 static atomic_t market_download_limit = ATOMIC_INIT(0);
 static atomic_t flash_state = ATOMIC_INIT(0);
+static atomic_t thermal_max_brightness = ATOMIC_INIT(0);
 static char boost_buf[128];
 const char *board_sensor;
 static char board_sensor_temp[128];
@@ -439,6 +440,27 @@ thermal_flash_state_store(struct device *dev,
 static DEVICE_ATTR(flash_state, 0664,
 	   thermal_flash_state_show, thermal_flash_state_store);
 
+static ssize_t thermal_max_brightness_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			atomic_read(&thermal_max_brightness));
+}
+static ssize_t thermal_max_brightness_store(struct device *dev,
+					 struct device_attribute *attr,
+					 const char *buf, size_t len)
+{
+	int val = -1;
+	val = simple_strtol(buf, NULL, 10);
+
+	atomic_set(&thermal_max_brightness, val);
+	return len;
+}
+
+static DEVICE_ATTR(thermal_max_brightness, 0664, thermal_max_brightness_show,
+		   thermal_max_brightness_store);
+
 #ifdef CONFIG_MI_THERMAL_ATC_ENABLE
 static ssize_t
 thermal_atc_enable_show(struct device *dev,
@@ -553,6 +575,7 @@ static struct attribute *mi_thermal_dev_attr_group[] = {
 	&dev_attr_modem_limit.attr,
 	&dev_attr_market_download_limit.attr,
 	&dev_attr_flash_state.attr,
+	&dev_attr_thermal_max_brightness.attr,
 #ifdef CONFIG_MI_THERMAL_ATC_ENABLE
 	&dev_attr_atc_enable.attr,
 #endif
