@@ -156,7 +156,7 @@ static int cpu_thermal_init(void)
 					__func__, cpu);
 			return -ESRCH;
 		}
-		printk(KERN_ERR "%s cpu=%d\n", __func__, cpu);
+		pr_err("%s cpu=%d\n", __func__, cpu);
 
 		i = cpufreq_table_count_valid_entries(policy);
 		if (!i) {
@@ -633,11 +633,11 @@ static void create_thermal_message_node(void)
 
 	sysfs_sd = kernel_kobj->sd->parent;
 	if (!sysfs_sd) {
-		printk(KERN_ERR "%s: sysfs_sd is NULL\n", __func__);
+		pr_err("%s: sysfs_sd is NULL\n", __func__);
 	} else {
 		class_sd = kernfs_find_and_get(sysfs_sd, "class");
 		if (!class_sd) {
-			printk(KERN_ERR "%s:can not find class_sd\n", __func__);
+			pr_err("%s:can not find class_sd\n", __func__);
 		} else {
 			thermal_sd = kernfs_find_and_get(class_sd, "thermal");
 			if (thermal_sd) {
@@ -646,10 +646,10 @@ static void create_thermal_message_node(void)
 					cp = to_subsys_private(kobj_tmp);
 					cls = cp->class;
 				} else {
-					printk(KERN_ERR "%s:can not find thermal kobj\n", __func__);
+					pr_err("%s:can not find thermal kobj\n", __func__);
 				}
 			} else {
-				printk(KERN_ERR "%s:can not find thermal_sd\n", __func__);
+				pr_err("%s:can not find thermal_sd\n", __func__);
 			}
 		}
 	}
@@ -671,7 +671,7 @@ static void create_thermal_message_node(void)
 
 static void destroy_thermal_message_node(void)
 {
-	printk(KERN_ERR "%s:destroy_thermal_message_node", __func__);
+	pr_err("%s:destroy_thermal_message_node", __func__);
 	sysfs_remove_group(&mi_thermal_dev.dev->kobj, &mi_thermal_dev.attrs);
 	if (NULL != mi_thermal_dev.class){
 		device_destroy(mi_thermal_dev.class,'H');
@@ -694,14 +694,14 @@ static int __init mi_thermal_interface_init(void)
         sm.thermal_notifier.notifier_call = screen_state_for_thermal_callback;
 	result = mi_disp_register_client(&sm.thermal_notifier);
     	if (result < 0) {
-            printk(KERN_ERR"Thermal: register screen state callback failed\n");
+            pr_err("Thermal: register screen state callback failed\n");
     	}
 	#endif
 
 	cpu_thermal_init();
 	result = of_parse_thermal_message();
 	if (result)
-		printk(KERN_ERR "%s:Thermal: Can not parse thermal message node, return %d\n", __func__,result);
+		pr_err("%s:Thermal: Can not parse thermal message node, return %d\n", __func__,result);
 	create_thermal_message_node();
 
 #ifdef CONFIG_MI_THERMAL_MULTI_CHARGE
