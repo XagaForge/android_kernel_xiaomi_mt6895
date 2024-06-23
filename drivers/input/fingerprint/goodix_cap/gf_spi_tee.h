@@ -38,6 +38,9 @@ u8 g_debug_level = DEBUG_LOG;
 /**********************IO Magic**********************/
 #define GF_IOC_MAGIC	'g'
 
+//#define GF_NAV_KEY_INPUT_SUPPORT
+
+#ifdef GF_NAV_KEY_INPUT_SUPPORT
 #define GF_NAV_INPUT_UP			KEY_UP
 #define GF_NAV_INPUT_DOWN		KEY_DOWN
 #define GF_NAV_INPUT_LEFT		KEY_LEFT
@@ -80,6 +83,10 @@ struct gf_key {
 	enum gf_key_event key;
 	uint32_t value;		/* key down = 1, key up = 0 */
 };
+
+#define GF_IOC_NAV_EVENT		_IOW(GF_IOC_MAGIC, 14, gf_nav_event_t)
+#define GF_IOC_INPUT_KEY_EVENT		_IOW(GF_IOC_MAGIC, 9, struct gf_key)
+#endif
 
 enum gf_netlink_cmd {
 	GF_NETLINK_TEST = 0,
@@ -150,15 +157,11 @@ typedef struct {
 #define GF_IOC_ENABLE_POWER		_IO(GF_IOC_MAGIC, 7)
 #define GF_IOC_DISABLE_POWER		_IO(GF_IOC_MAGIC, 8)
 
-#define GF_IOC_INPUT_KEY_EVENT		_IOW(GF_IOC_MAGIC, 9, struct gf_key)
-
 /* fp sensor has change to sleep mode while screen off */
 #define GF_IOC_ENTER_SLEEP_MODE		_IO(GF_IOC_MAGIC, 10)
 #define GF_IOC_GET_FW_INFO		_IOR(GF_IOC_MAGIC, 11, u8)
 #define GF_IOC_REMOVE		_IO(GF_IOC_MAGIC, 12)
 #define GF_IOC_CHIP_INFO	_IOW(GF_IOC_MAGIC, 13, struct gf_ioc_chip_info)
-
-#define GF_IOC_NAV_EVENT	_IOW(GF_IOC_MAGIC, 14, gf_nav_event_t)
 
 /* for SPI REE transfer */
 #define GF_IOC_TRANSFER_CMD		_IOWR(GF_IOC_MAGIC, 15, struct gf_ioc_transfer)

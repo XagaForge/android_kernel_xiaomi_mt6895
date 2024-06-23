@@ -814,10 +814,12 @@ static irqreturn_t gf_irq(int irq, void *handle)
 static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 {
 	struct gf_device *gf_dev = NULL;
+#ifdef GF_NAV_KEY_INPUT_SUPPORT
 	struct gf_key gf_key;
 	gf_nav_event_t nav_event = GF_NAV_NONE;
 	uint32_t nav_input = 0;
 	uint32_t key_input = 0;
+#endif
 #ifdef SUPPORT_REE_SPI
 #ifdef SUPPORT_REE_OSWEGO
 	struct gf_ioc_transfer ioc;
@@ -986,6 +988,7 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		gf_hw_power_enable(gf_dev, 0);
 		break;
 
+#ifdef GF_NAV_KEY_INPUT_SUPPORT
 	case GF_IOC_INPUT_KEY_EVENT:
 		if (copy_from_user
 		    (&gf_key, (struct gf_key *)arg, sizeof(struct gf_key))) {
@@ -1089,6 +1092,7 @@ static long gf_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			input_sync(gf_dev->input);
 		}
 		break;
+#endif
 
 	case GF_IOC_ENTER_SLEEP_MODE:
 		gf_debug(INFO_LOG, "%s: GF_IOC_ENTER_SLEEP_MODE ======\n",
@@ -2412,6 +2416,7 @@ static int gf_probe(struct spi_device *spi)
 
 	__set_bit(EV_KEY, gf_dev->input->evbit);
 
+#ifdef GF_NAV_KEY_INPUT_SUPPORT
 	__set_bit(GF_KEY_INPUT_MENU, gf_dev->input->keybit);
 	__set_bit(GF_KEY_INPUT_BACK, gf_dev->input->keybit);
 	__set_bit(GF_KEY_INPUT_POWER, gf_dev->input->keybit);
@@ -2427,6 +2432,7 @@ static int gf_probe(struct spi_device *spi)
 	__set_bit(GF_NAV_INPUT_LONG_PRESS, gf_dev->input->keybit);
 	__set_bit(GF_NAV_INPUT_HEAVY, gf_dev->input->keybit);
 	//__set_bit(GF_KEY_INPUT_KPENTER, gf_dev->input->keybit);
+#endif
 
 	gf_dev->input->name = GF_INPUT_NAME;
 	gf_dev->input->id.vendor = 0x0666;
