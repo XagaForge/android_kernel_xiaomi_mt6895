@@ -104,8 +104,12 @@ enum mtu3_speed {
  * @MU3D_EP0_STATE_RX: OUT data stage
  * @MU3D_EP0_STATE_TX_END: the last IN data is transferred, and
  *		waits for its completion interrupt
+ * @MU3D_EP0_STATE_TX_ENDED: will go back to waiting for data after
+ *		giving back the request is done
  * @MU3D_EP0_STATE_STALL: ep0 is in stall status, will be auto-cleared
  *		after receives a SETUP.
+ * @MU3D_EP0_STATE_RX_END: the last OUT data is transferred, and
+ *      waits for gadget driver to send ACK
  */
 enum mtu3_g_ep0_state {
 	MU3D_EP0_STATE_SETUP = 1,
@@ -113,6 +117,8 @@ enum mtu3_g_ep0_state {
 	MU3D_EP0_STATE_RX,
 	MU3D_EP0_STATE_TX_END,
 	MU3D_EP0_STATE_STALL,
+	MU3D_EP0_STATE_RX_END,
+	MU3D_EP0_STATE_TX_ENDED,
 };
 
 /**

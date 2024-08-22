@@ -49,6 +49,10 @@ static char *decode_ep0_state(struct mtu3 *mtu)
 		return "TX-END";
 	case MU3D_EP0_STATE_STALL:
 		return "STALL";
+	case MU3D_EP0_STATE_RX_END:
+		return "RX-END";
+	case MU3D_EP0_STATE_TX_ENDED:
+		return "TX-ENDED";
 	default:
 		return "??";
 	}
@@ -505,6 +509,25 @@ static int handle_standard_request(struct mtu3 *mtu,
 	return handled;
 }
 
+static int ep0_send_ack(struct mtu3 *mtu)
+{
+	void __iomem *mbase = mtu->mac_base;
+	u32 csr = mtu3_readl(mbase, U3D_EP0CSR) & EP0_W1C_BITS;
+
+	if (mtu->ep0_state == MU3D_EP0_STATE_RX_END)
+		csr |= EP0_DATAEND | EP0_RXPKTRDY;
+	else if (mtu->ep0_state == MU3D_EP0_STATE_TX_ENDED)
+		csr |= EP0_DATAEND;
+	else
+		return -EINVAL;
+
+	mtu3_writel(mbase, U3D_EP0CSR, csr);
+
+	mtu->ep0_state = MU3D_EP0_STATE_SETUP;
+
+	return 0;
+}
+
 /* receive an data packet (OUT) */
 static void ep0_rx_state(struct mtu3 *mtu)
 {
@@ -538,11 +561,9 @@ static void ep0_rx_state(struct mtu3 *mtu)
 
 		maxp = mtu->g.ep0->maxpacket;
 		if (count < maxp || req->actual == req->length) {
-			mtu->ep0_state = MU3D_EP0_STATE_SETUP;
+			mtu->ep0_state = MU3D_EP0_STATE_RX_END;
 			dev_dbg(mtu->dev, "ep0 state: %s\n",
 				decode_ep0_state(mtu));
-
-			csr |= EP0_DATAEND;
 		} else {
 			req = NULL;
 		}
@@ -551,11 +572,11 @@ static void ep0_rx_state(struct mtu3 *mtu)
 		dev_dbg(mtu->dev, "%s: SENDSTALL\n", __func__);
 	}
 
-	mtu3_writel(mbase, U3D_EP0CSR, csr);
-
 	/* give back the request if have received all data */
 	if (req)
 		ep0_req_giveback(mtu, req);
+	else
+		mtu3_writel(mbase, U3D_EP0CSR, csr);
 
 }
 
@@ -743,14 +764,11 @@ irqreturn_t mtu3_ep0_isr(struct mtu3 *mtu)
 		}
 		break;
 	case MU3D_EP0_STATE_TX_END:
-		mtu3_writel(mbase, U3D_EP0CSR,
-			(csr & EP0_W1C_BITS) | EP0_DATAEND);
-
+		mtu->ep0_state = MU3D_EP0_STATE_TX_ENDED;
 		mreq = next_ep0_request(mtu);
 		if (mreq)
 			ep0_req_giveback(mtu, &mreq->request);
 
-		mtu->ep0_state = MU3D_EP0_STATE_SETUP;
 		ret = IRQ_HANDLED;
 		dev_dbg(mtu->dev, "ep0_state: %s\n", decode_ep0_state(mtu));
 		break;
@@ -767,6 +785,8 @@ irqreturn_t mtu3_ep0_isr(struct mtu3 *mtu)
 		ep0_handle_setup(mtu);
 		ret = IRQ_HANDLED;
 		break;
+	case MU3D_EP0_STATE_RX_END:
+	case MU3D_EP0_STATE_TX_ENDED:
 	default:
 		/* can't happen */
 		ep0_stall_set(mtu->ep0, true, 0);
@@ -806,6 +826,8 @@ static int ep0_queue(struct mtu3_ep *mep, struct mtu3_request *mreq)
 	case MU3D_EP0_STATE_SETUP:
 	case MU3D_EP0_STATE_RX:	/* control-OUT data */
 	case MU3D_EP0_STATE_TX:	/* control-IN data */
+	case MU3D_EP0_STATE_RX_END:
+	case MU3D_EP0_STATE_TX_ENDED:
 		break;
 	default:
 		dev_err(mtu->dev, "%s, error in ep0 state %s\n", __func__,
@@ -829,6 +851,19 @@ static int ep0_queue(struct mtu3_ep *mep, struct mtu3_request *mreq)
 	/* sequence #1, IN ... start writing the data */
 	if (mtu->ep0_state == MU3D_EP0_STATE_TX)
 		ep0_tx_state(mtu);
+
+	/* status stage of OUT with data, issue IN status, then giveback */
+	else if (mtu->ep0_state == MU3D_EP0_STATE_RX_END
+		|| mtu->ep0_state == MU3D_EP0_STATE_TX_ENDED) {
+		int status;
+		if (mreq->request.length)
+			status = -EINVAL;
+		else {
+			status = ep0_send_ack(mtu);
+			ep0_req_giveback(mtu, &mreq->request);
+		}
+		return status;
+	}
 
 	return 0;
 }
@@ -892,7 +927,11 @@ static int mtu3_ep0_halt(struct usb_ep *ep, int value)
 	case MU3D_EP0_STATE_TX_END:
 	case MU3D_EP0_STATE_RX:
 	case MU3D_EP0_STATE_SETUP:
+	case MU3D_EP0_STATE_TX_ENDED:
 		ep0_stall_set(mtu->ep0, true, 0);
+		break;
+	case MU3D_EP0_STATE_RX_END:
+		ep0_stall_set(mtu->ep0, true, EP0_RXPKTRDY);
 		break;
 	default:
 		dev_dbg(mtu->dev, "ep0 can't halt in state %s\n",
