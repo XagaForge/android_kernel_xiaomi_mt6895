@@ -506,6 +506,33 @@ uvc_v4l2_streamoff(struct file *file, void *fh, enum v4l2_buf_type type)
 	return 0;
 }
 
+static void
+uvc_v4l2_event_merge(const struct v4l2_event *old, struct v4l2_event *new) {
+	/*
+	 * The only purpose of this callback is to inform the user why
+	 * some events are dropped. It does not make sense to actually
+	 * merge any callbacks for UVC, the queue size should be
+	 * increased if this is hit.
+	 */
+	pr_err("uvc gadget: dropping event due to insufficient queue size!");
+}
+
+static void
+uvc_v4l2_event_replace(struct v4l2_event *old, const struct v4l2_event *new) {
+	/*
+	 * The only purpose of this callback is to inform the user why
+	 * some events are dropped. It does not make sense to actually
+	 * replace any callbacks for UVC, the queue size should be
+	 * increased if this is hit.
+	 */
+	pr_err("uvc gadget: dropping event due to insufficient queue size!");
+}
+
+static const struct v4l2_subscribed_event_ops uvc_v4l2_event_ch_ops = {
+	.merge = uvc_v4l2_event_merge,
+	.replace = uvc_v4l2_event_replace,
+};
+
 static int
 uvc_v4l2_subscribe_event(struct v4l2_fh *fh,
 			 const struct v4l2_event_subscription *sub)
@@ -524,7 +551,7 @@ uvc_v4l2_subscribe_event(struct v4l2_fh *fh,
 		return -EBUSY;
 	}
 
-	ret = v4l2_event_subscribe(fh, sub, 2, NULL);
+	ret = v4l2_event_subscribe(fh, sub, 2, &uvc_v4l2_event_ch_ops);
 	if (ret < 0) {
 		mutex_unlock(&uvc->lock);
 		return ret;
