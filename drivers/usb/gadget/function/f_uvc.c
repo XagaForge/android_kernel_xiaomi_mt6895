@@ -214,13 +214,25 @@ uvc_function_ep0_complete(struct usb_ep *ep, struct usb_request *req)
 	}
 
 	if (uvc->event_setup_out) {
+		struct usb_ctrlrequest *mctrl = &uvc_event->req;
+		memset(&v4l2_event, 0, sizeof(v4l2_event));
+		v4l2_event.type = UVC_EVENT_SETUP;
+		memcpy(&uvc_event->req, &uvc->control_setup, sizeof(uvc_event->req));
+		/* check for the interface number, fixup the interface number in
+		 * the ctrl request so the userspace doesn't have to bother with
+		 * offset and configfs parsing
+		 */
+		if ((le16_to_cpu(mctrl->wIndex) & 0xff) == uvc->streaming_intf)
+			mctrl->wIndex = cpu_to_le16(UVC_STRING_STREAMING_IDX);
+		else
+			mctrl->wIndex &= ~cpu_to_le16(0xff);
+		v4l2_event_queue(&uvc->vdev, &v4l2_event);
+
 		memset(&v4l2_event, 0, sizeof(v4l2_event));
 		v4l2_event.type = UVC_EVENT_DATA;
 		uvc_event->data.length = min_t(unsigned int, req->actual,
 			sizeof(uvc_event->data.data));
 		memcpy(&uvc_event->data.data, req->buf, uvc_event->data.length);
-		memcpy(&uvc_event->data.setup, &uvc->control_setup,
-		       sizeof(uvc_event->data.setup));
 		v4l2_event_queue(&uvc->vdev, &v4l2_event);
 	}
 }
