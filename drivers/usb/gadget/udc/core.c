@@ -920,40 +920,6 @@ EXPORT_SYMBOL_GPL(usb_gadget_giveback_request);
 /* ------------------------------------------------------------------------- */
 
 /**
- * usb_gadget_control_complete - complete the status stage of a control
- *	request, or delay it
- * Context: in_interrupt()
- *
- * @gadget: gadget whose control request's status stage should be completed
- * @request: usb request whose status stage should be completed
- *
- * This is called by device controller drivers before returning the completed
- * request back to the gadget layer, to either complete or delay the status
- * stage. It exits without doing anything if the request has a non-zero status,
- * if it has zero length, or if its explicit_status flag is set.
- */
-void usb_gadget_control_complete(struct usb_gadget *gadget,
-		struct usb_request *request)
-{
-	struct usb_request *req;
-
-	if (request->explicit_status || request->status || !request->length)
-		return;
-
-	/* Send an implicit status-stage request for ep0 */
-	req = usb_ep_alloc_request(gadget->ep0, GFP_ATOMIC);
-	if (req) {
-		req->length = 0;
-		req->explicit_status = 1;
-		req->complete = usb_ep_free_request;
-		usb_ep_queue(gadget->ep0, req, GFP_ATOMIC);
-	}
-}
-EXPORT_SYMBOL_GPL(usb_gadget_control_complete);
-
-/* ------------------------------------------------------------------------- */
-
-/**
  * gadget_find_ep_by_name - returns ep whose name is the same as sting passed
  *	in second parameter or NULL if searched endpoint not found
  * @g: controller to check for quirk
