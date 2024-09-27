@@ -125,7 +125,13 @@ struct usb_request {
 	int			status;
 	unsigned		actual;
 
-	ANDROID_KABI_USE(1, bool explicit_status);
+	_ANDROID_KABI_REPLACE(_ANDROID_KABI_RESERVE(1),
+			 struct {
+				__u8 explicit_status:1;
+				__u8 android_kabi_reserved1_padding1;
+				__u16 android_kabi_reserved1_padding2;
+				__u32 android_kabi_reserved1_padding3;
+				});
 };
 
 /*-------------------------------------------------------------------------*/
