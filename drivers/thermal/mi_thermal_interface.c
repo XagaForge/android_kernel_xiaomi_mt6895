@@ -24,11 +24,11 @@
 #include "thermal_core.h"
 
 
-#if IS_ENABLED(CONFIG_MI_DISP_NOTIFIER)
-#include "../gpu/drm/mediatek/mediatek_v2/mi_disp/mi_disp_notifier.h"
+#if IS_ENABLED(CONFIG_DRM_MEDIATEK)
+#include "../gpu/drm/mediatek/mediatek_v2/mtk_disp_notify.h"
 #endif
 
-#if IS_ENABLED(CONFIG_MI_DISP_NOTIFIER)
+#if IS_ENABLED(CONFIG_DRM_MEDIATEK)
 struct screen_monitor {
         struct notifier_block thermal_notifier;
         int screen_state;
@@ -81,6 +81,7 @@ static atomic_t switch_mode = ATOMIC_INIT(-1);
 static atomic_t balance_mode = ATOMIC_INIT(0);
 static atomic_t modem_limit = ATOMIC_INIT(0);
 static atomic_t market_download_limit = ATOMIC_INIT(0);
+static atomic_t flash_state = ATOMIC_INIT(0);
 static char boost_buf[128];
 const char *board_sensor;
 static char board_sensor_temp[128];
@@ -207,7 +208,7 @@ static int cpu_thermal_init(void)
 	return ret;
 }
 
-static void destory_thermal_cpu(void){
+static void destory_thermal_cpu(){
 	struct cpufreq_device *priv, *tmp;
 	list_for_each_entry_safe(priv, tmp, &cpufreq_dev_list, node) {
 		freq_qos_remove_request(priv->qos_req);
@@ -267,7 +268,6 @@ cpu_limits_store(struct device *dev,
 static DEVICE_ATTR(cpu_limits, 0664,
 		cpu_limits_show, cpu_limits_store);
 
-#if IS_ENABLED(CONFIG_MI_DISP_NOTIFIER)
 static ssize_t thermal_screen_state_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -276,7 +276,7 @@ static ssize_t thermal_screen_state_show(struct device *dev,
 
 static DEVICE_ATTR(screen_state, 0664,
 		thermal_screen_state_show, NULL);
-#endif
+
 	static ssize_t
 thermal_sconfig_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -416,7 +416,29 @@ thermal_modem_limit_store(struct device *dev,
 static DEVICE_ATTR(modem_limit, 0664,
 	   thermal_modem_limit_show, thermal_modem_limit_store);
 
-#ifdef CONFIG_MI_THERMAL_ATC_ENABLE
+static ssize_t
+thermal_flash_state_show(struct device *dev,
+				      struct device_attribute *attr, char *buf)
+{
+	return snprintf(buf, PAGE_SIZE, "%d\n", atomic_read(&flash_state));
+}
+
+static ssize_t
+thermal_flash_state_store(struct device *dev,
+				      struct device_attribute *attr, const char *buf, size_t len)
+{
+	int val = -1;
+
+	val = simple_strtol(buf, NULL, 10);
+
+	atomic_set(&flash_state, val);
+	return len;
+}
+
+static DEVICE_ATTR(flash_state, 0664,
+	   thermal_flash_state_show, thermal_flash_state_store);
+
+#ifdef CONFIG_MI_THERMAL_ATC_ENABLE	
 static ssize_t
 thermal_atc_enable_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
@@ -495,7 +517,7 @@ static int usb_online_callback(struct notifier_block *nb,
 		usb_state.usb_online = ret.intval;
 		if (mi_thermal_dev.dev)
 				schedule_delayed_work(&mi_thermal_dev.work, 0);
-
+				
 	}
 	return NOTIFY_OK;
 }
@@ -520,15 +542,14 @@ static struct attribute *mi_thermal_dev_attr_group[] = {
 	&dev_attr_temp_state.attr,
 	&dev_attr_cpu_limits.attr,
 	&dev_attr_sconfig.attr,
-#if IS_ENABLED(CONFIG_MI_DISP_NOTIFIER)
 	&dev_attr_screen_state.attr,
-#endif
 	&dev_attr_boost.attr,
 	&dev_attr_board_sensor.attr,
 	&dev_attr_board_sensor_temp.attr,
 	&dev_attr_balance_mode.attr,
 	&dev_attr_modem_limit.attr,
 	&dev_attr_market_download_limit.attr,
+	&dev_attr_flash_state.attr,
 #ifdef CONFIG_MI_THERMAL_ATC_ENABLE
 	&dev_attr_atc_enable.attr,
 #endif
@@ -539,42 +560,37 @@ static struct attribute *mi_thermal_dev_attr_group[] = {
 	NULL,
 };
 
-#if IS_ENABLED(CONFIG_MI_DISP_NOTIFIER)
-static int screen_state_for_thermal_callback(struct notifier_block *nb, unsigned long val, void *v)
+#if IS_ENABLED(CONFIG_DRM_MEDIATEK)
+static int screen_state_for_thermal_callback(struct notifier_block *nb, unsigned long action, void *v)
 {
 
-    struct mi_disp_notifier *evdata = v;
+    int *data = (int *)v;
     struct screen_monitor *s_m =
 			container_of(nb, struct screen_monitor, thermal_notifier);
-    unsigned int blank;
-
-	  if (!(val == MI_DISP_DPMS_EARLY_EVENT ||
-	      val == MI_DISP_DPMS_EVENT)) {
-		    pr_info("event(%lu) do not need process\n", val);
-		    return NOTIFY_OK;
-	    }
-    if (evdata && evdata->data && s_m){
-      blank = *(int *)(evdata->data);
-		  pr_info("%s IN val:%lu,balnk:%u\n", __func__, val, blank);
-		if ((val == MI_DISP_DPMS_EVENT) && (blank == MI_DISP_DPMS_POWERDOWN 
-                   || blank == MI_DISP_DPMS_LP1 || blank == MI_DISP_DPMS_LP2)) {
+    if (v && s_m){
+		pr_info("%s IN", __func__);
+		if (action == MTK_DISP_EARLY_EVENT_BLANK) {
+			if (*data == MTK_DISP_BLANK_POWERDOWN) {
 			    sm.screen_state = 0;
-		} else if ((val == MI_DISP_DPMS_EVENT) && (blank == MI_DISP_DPMS_ON)) {
-			    sm.screen_state = 1;
+			}
+		} else if (action == MTK_DISP_EVENT_BLANK) {
+			if (*data == MTK_DISP_BLANK_UNBLANK) {
+				sm.screen_state = 1;
+			}
 		}
-		pr_info("%s OUT screen_state %d", __func__,sm.screen_state);
+		pr_info("%s OUT", __func__);
 	}else {
-		pr_info("MI_DISP can not get screen_state");
+		pr_info("MTK_DISP can not get screen_state");
 		return -1;
 	}
-
+	
 	sysfs_notify(&mi_thermal_dev.dev->kobj, NULL, "screen_state");
 
-    return NOTIFY_OK;
+    return 0;
 }
 #endif
 
-static void create_thermal_message_node(void)
+static void create_thermal_message_node()
 {
 	int ret = 0;
 	struct kernfs_node *sysfs_sd = NULL;
@@ -643,14 +659,14 @@ static int __init mi_thermal_interface_init(void)
 {
 	int result;
 
-	#if IS_ENABLED(CONFIG_MI_DISP_NOTIFIER)
+	#if IS_ENABLED(CONFIG_DRM_MEDIATEK)
         sm.thermal_notifier.notifier_call = screen_state_for_thermal_callback;
-	result = mi_disp_register_client(&sm.thermal_notifier);
+	result = mtk_disp_notifier_register("screen state", &sm.thermal_notifier);
     	if (result < 0) {
             printk(KERN_ERR"Thermal: register screen state callback failed\n");
     	}
 	#endif
-
+	
 	cpu_thermal_init();
 	result = of_parse_thermal_message();
 	if (result)
@@ -664,7 +680,7 @@ static int __init mi_thermal_interface_init(void)
 		pr_err("usb online notifier registration error. return: %d\n",
 			result);
 	}
-
+	
 	INIT_DELAYED_WORK(&mi_thermal_dev.work, usb_online_work);
 #endif
 	return 0;
@@ -676,8 +692,8 @@ static void __exit mi_thermal_interface_exit(void)
 	if (mi_thermal_dev.dev)
 	cancel_delayed_work_sync(&mi_thermal_dev.work);
 	#endif
-	#if IS_ENABLED(CONFIG_MI_DISP_NOTIFIER)
-	mi_disp_unregister_client(&sm.thermal_notifier);
+	#if IS_ENABLED(CONFIG_DRM_MEDIATEK)
+	mtk_disp_notifier_unregister(&sm.thermal_notifier);
 	#endif
 	destroy_thermal_message_node();
 	destory_thermal_cpu();
