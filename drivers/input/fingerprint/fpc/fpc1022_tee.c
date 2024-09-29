@@ -350,12 +350,12 @@ static ssize_t clk_enable_set(struct device *dev,
 	}
 	if (*buf == 49) {
 		mt_spi_enable_master_clk(fpc1022->spi);
-		dev_err(fpc1022->dev, " enable spi clk %s\n", __func__);
+		dev_dbg(fpc1022->dev, " enable spi clk %s\n", __func__);
 		return 1;
 	}
 	if (*buf == 48) {
 		mt_spi_disable_master_clk(fpc1022->spi);
-		dev_err(fpc1022->dev, " disable spi clk %s\n", __func__);
+		dev_dbg(fpc1022->dev, " disable spi clk %s\n", __func__);
 		return 1;
 	} else {
 		dev_err(fpc1022->dev, " invalid spi clk parameter %s\n",
