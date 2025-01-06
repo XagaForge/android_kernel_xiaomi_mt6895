@@ -240,7 +240,7 @@ ifdef KBUILD_MIXED_TREE
 required_mixed_files=vmlinux.symvers System.map
 $(if $(filter-out $(words $(required_mixed_files)), \
 		$(words $(wildcard $(add-prefix $(KBUILD_MIXED_TREE)/,$(required_mixed_files))))),,\
-	$(error KBUILD_MIXED_TREE=$(KBUILD_MIXED_TREE) doesn't contain $(required_mixed_files)))
+	$(error KBUILD_MIXED_TREE=$(KBUILD_MIXED_TREE) does not contain $(required_mixed_files)))
 endif
 
 mixed-build-prefix = $(if $(KBUILD_MIXED_TREE),$(KBUILD_MIXED_TREE)/)
