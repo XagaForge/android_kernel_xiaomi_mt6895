@@ -6043,7 +6043,7 @@
 			interrupts = <GIC_SPI 313 IRQ_TYPE_LEVEL_HIGH 0>;
 			clocks = <&mmsys0_config_clk CLK_MM0_DISP_AAL0>;
 			aal_dre3 = <&disp_mdp_aal0>;
-			mtk_aal_support = <1>;
+			mtk_aal_support = <0>;
 			mtk_dre30_support = <0>;
 		};
 
@@ -6365,7 +6365,7 @@
 			interrupts = <GIC_SPI 357 IRQ_TYPE_LEVEL_HIGH 0>;
 			clocks = <&mmsys1_config_clk CLK_MM1_DISP_AAL0>;
 			aal_dre3 = <&disp_mdp_aal1>;
-			mtk_aal_support = <1>;
+			mtk_aal_support = <0>;
 			mtk_dre30_support = <0>;
 		};
 
