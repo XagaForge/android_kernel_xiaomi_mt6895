@@ -1687,7 +1687,8 @@ static void sock_copy(struct sock *nsk, const struct sock *osk)
 {
 	const struct proto *prot = READ_ONCE(osk->sk_prot);
 #ifdef CONFIG_SECURITY_NETWORK
-	void *sptr = nsk->sk_security;
+	struct sk_security_struct sksec;
+ 	memcpy(&sksec, nsk->sk_security, sizeof(sksec));
 #endif
 	memcpy(nsk, osk, offsetof(struct sock, sk_dontcopy_begin));
 
@@ -1695,7 +1696,7 @@ static void sock_copy(struct sock *nsk, const struct sock *osk)
 	       prot->obj_size - offsetof(struct sock, sk_dontcopy_end));
 
 #ifdef CONFIG_SECURITY_NETWORK
-	nsk->sk_security = sptr;
+	memcpy(nsk->sk_security, &sksec, sizeof(sksec));
 	security_sk_clone(osk, nsk);
 #endif
 }
