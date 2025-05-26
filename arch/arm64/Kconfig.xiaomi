@@ -12,6 +12,12 @@ config TARGET_PRODUCT_PLATO
 	help
 	Product Name Plato.
 
+config TARGET_PRODUCT_REMBRANDT
+	bool "Product Name Rembrandt"
+	default n
+	help
+	Product Name Rembrandt.
+
 config TARGET_PRODUCT_RUBENS
 	bool "Product Name Rubens"
 	default n
