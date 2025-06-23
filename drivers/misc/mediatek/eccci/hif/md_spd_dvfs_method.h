@@ -5,7 +5,9 @@
 
 void mtk_ccci_spd_qos_method_init(void);
 
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 void set_ccmni_rps(unsigned long value);
+#endif
 
 void mtk_ccci_spd_qos_set_task(
 	struct task_struct *rx_push_task,

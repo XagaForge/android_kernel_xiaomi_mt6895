@@ -277,6 +277,7 @@ static inline void apply_qos_dram_freq(void)
 	}
 }
 
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 static inline void apply_qos_rps(void)
 {
 	const struct dvfs_ref *dl_ref, *ul_ref;
@@ -302,6 +303,7 @@ static inline void apply_qos_rps(void)
 			s_rps, dl_rps, ul_rps, case_type);
 	set_ccmni_rps(s_rps);
 }
+#endif
 
 static inline void apply_qos_isr(void)
 {
@@ -423,7 +425,9 @@ static inline void spd_qos_method(u64 dl_speed[], u32 dl_num, u64 ul_speed[], u3
 		apply_qos_cpu_freq();
 		apply_qos_dram_freq();
 		apply_qos_isr();
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 		apply_qos_rps();
+#endif
 		update_tx_done_affinity();
 
 		if (dl_change)
