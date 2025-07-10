@@ -1,7 +1,7 @@
 config MTK_NET_RPS
 	tristate "MediaTek rps set API"
 	depends on MTK_NET_CCMNI
-	default MTK_NET_CCMNI
+	default n
 	help
 	  Choose this option to set rps by API.
 	  It will be called for ccmni & rndis driver.
