@@ -33,9 +33,10 @@
 #include <linux/of_gpio.h>
 #include "bq28z610.h"
 #include "mtk_battery.h"
-#ifdef CONFIG_TARGET_PRODUCT_XAGA
+#if defined(CONFIG_TARGET_PRODUCT_XAGA) || defined(CONFIG_TARGET_PRODUCT_PEARL)
 #include "../../../misc/hwid/hwid.h"
 #endif
+
 
 enum product_name {
 	XAGA_NO,
