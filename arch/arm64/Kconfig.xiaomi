@@ -6,6 +6,12 @@ config TARGET_PRODUCT_ARISTOTLE
     help
     Product Name Aristotle.
 
+config TARGET_PRODUCT_Pearl
+	bool "Product Name Pearl"
+	default n
+	help
+	Product Name Pearl.
+
 config TARGET_PRODUCT_PLATO
 	bool "Product Name Plato"
 	default n
