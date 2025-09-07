@@ -155,9 +155,8 @@ static int gt9764_power_off(struct gt9764_device *gt9764)
 
 	if (gt9764->vcamaf_pinctrl && gt9764->vcamaf_off)
 		ret = pinctrl_select_state(gt9764->vcamaf_pinctrl,
-					gt9764->vcamaf_off);
-
-	return ret;
+								   gt9764->vcamaf_off);
+									return ret;
 }
 
 static int gt9764_power_on(struct gt9764_device *gt9764)
