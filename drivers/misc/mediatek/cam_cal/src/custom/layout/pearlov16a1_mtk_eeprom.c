@@ -21,11 +21,7 @@ static struct STRUCT_CALIBRATION_LAYOUT_STRUCT cal_layout_table = {
 		{0x00000001, 0x00000001, 0x0000000F, xiaomi_do_module_version},
 		{0x00000001, 0x00000010, 0x00000010, xiaomi_do_part_number},
 		{0x00000001, 0x0000077C, 0x0000074C, xiaomi_do_single_lsc},
-#ifdef PEARL_CAM
 		{0x00000001, 0x0000075B, 0x00000010, xiaomi_do_2a_gain_else},
-#else
-		{0x00000001, 0x0000075B, 0x00000010, xiaomi_do_2a_gain},
-#endif
 		{0x00000000, 0x000016C1, 0x000005DD, NULL},
 		{0x00000000, 0x00000000, 0x00000001, NULL},
 		{0x00000000, 0x00000000, 0x00003FFC, xiaomi_do_dump_all},
