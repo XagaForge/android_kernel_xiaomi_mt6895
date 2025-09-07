@@ -40,7 +40,7 @@
 #include "charger_class.h"
 #include "mtk_charger.h"
 #include "ln8000_charger.h"
-#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+#if defined(CONFIG_TARGET_PRODUCT_XAGA) || defined(CONFIG_TARGET_PRODUCT_PEARL)
 #include "../../../misc/hwid/hwid.h"
 #endif
 //#include <mt-plat/charger_type.h>
