@@ -1389,8 +1389,12 @@ static int lcm_led_i2c_reg_op(char *buffer, int op, int count)
 
 static void lcm_esd_restore_backlight(struct drm_panel *panel)
 {
-	struct lcm *ctx = panel_to_lcm(panel);
+	struct lcm *ctx;
 	unsigned int level;
+
+	ctx = panel_to_lcm(panel);
+	(void)ctx;
+	// Suppress unused variable warning; ctx may be used in future enhancements
 
 	level = bl_level;
 
