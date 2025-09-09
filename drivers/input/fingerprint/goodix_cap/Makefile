@@ -20,7 +20,7 @@ subdir-ccflags-y += -I$(srctree)/drivers/tee/teei/400/common/include/
 #obj-$(CONFIG_GOODIX_CAP_FINGERPRINT) := gf_spi_tee.o gf_spi_factory.o
 obj-m := gf_spi_tee.o
 
-$(warning "start compling fp")
+$(warning "start compling good_cap")
 $(warning $(CONFIG_BUILD_PRODUCT_NAME))
 ifneq ($(filter "rubens" "xaga", $(CONFIG_BUILD_PRODUCT_NAME)),)
 CDEFINES += -DCONFIG_PRODUCT_RUBENS_FP

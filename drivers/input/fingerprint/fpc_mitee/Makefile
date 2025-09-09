@@ -18,3 +18,10 @@ subdir-ccflags-y += -I$(srctree)/drivers/tee/teei/400/common/include/
 
 #obj-$(CONFIG_FPC_MITEE_FINGERPRINT) := fpc1022_tee.o
 obj-m := fpc1022_tee.o
+
+$(warning "start compling fpc_mitee")
+$(warning $(CONFIG_BUILD_PRODUCT_NAME))
+ifeq ($(CONFIG_BUILD_PRODUCT_NAME), "pearl")
+CDEFINES += -DCONFIG_PRODUCT_pearl_FP
+KBUILD_CPPFLAGS += $(CDEFINES)
+endif

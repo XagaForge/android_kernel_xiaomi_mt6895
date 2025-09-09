@@ -18,7 +18,7 @@ subdir-ccflags-y += -I$(srctree)/drivers/tee/teei/400/common/include/
 # obj-$(CONFIG_GOODIX_FINGERPRINT) := gf_spi_tee.o gf_spi_factory.o
 obj-m := gf_spi_tee.o
 
-$(warning "start compling fp")
+$(warning "start compling goodix")
 $(warning $(CONFIG_BUILD_PRODUCT_NAME))
 ifneq ($(filter "daumier", $(CONFIG_BUILD_PRODUCT_NAME)),)
 CDEFINES += -DCONFIG_PRODUCT_DAUMIER_FP

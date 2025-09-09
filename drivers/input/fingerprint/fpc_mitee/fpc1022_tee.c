@@ -196,13 +196,13 @@ static void fpc1022_get_irqNum(struct fpc1022_data *fpc1022)
 	if (node) {
 		//xpt of_property_read_u32_array(node, "debounce", ints, ARRAY_SIZE(ints));
 		//xpt fpc1022->irq_gpio = ints[0];
-		/*debounce = ints[1];
-		   mt_gpio_set_debounce(gpiopin, debounce); */
+		//debounce = ints[1];
+		// 		   mt_gpio_set_debounce(gpiopin, debounce);
 
 		fpc1022->irq_num = irq_of_parse_and_map(node, 0);	//xpt
 		fpc1022->irq_gpio = of_get_named_gpio(node, "fpc,gpio_irq", 0);
 		printk("%s , fpc1022->irq_num = %d, fpc1022->irq_gpio = %d\n",
-		       __func__, fpc1022->irq_num, fpc1022->irq_gpio);
+			   __func__, fpc1022->irq_num, fpc1022->irq_gpio);
 		if (!fpc1022->irq_num)
 			printk("irq_of_parse_and_map fail!!\n");
 
@@ -235,7 +235,7 @@ static void power_reset(void)
 {
 	int status = -EINVAL;
 	status = regulator_get_voltage(buck);
-	pr_info("%s, voltage before power down is %d\n", __func__, status);
+	pr_debug("%s, voltage before power down is %d\n", __func__, status);
 
 	/* power down */
 	status = regulator_disable(buck);
@@ -248,16 +248,16 @@ static void power_reset(void)
 /* XIAOMI_ADD_END */
 
 static ssize_t power_ctrl_get(struct device *device,
-				struct device_attribute *attribute,
-				char *buffer)
+							  struct device_attribute *attribute,
+							  char *buffer)
 {
 	int enabled = regulator_is_enabled(buck);
 	return scnprintf(buffer, PAGE_SIZE, "%i\n", enabled);
 }
 
 static ssize_t power_ctrl_set(struct device *device,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
+							  struct device_attribute *attr,
+							  const char *buf, size_t count)
 {
 	int status = 0;
 	int voltage, enabled;
@@ -274,7 +274,7 @@ static ssize_t power_ctrl_set(struct device *device,
 			status = regulator_disable(buck);
 		}
 	} else if (!strncmp(buf, "force_disable", strlen("force_disable"))) {
-			status = regulator_force_disable(buck);
+		status = regulator_force_disable(buck);
 	} else if (!strncmp(buf, "power_on_reset", strlen("power_on_reset"))) {
 		enabled = regulator_is_enabled(buck);
 		if (enabled <= 0) {
@@ -287,14 +287,14 @@ static ssize_t power_ctrl_set(struct device *device,
 	}
 	voltage = regulator_get_voltage(buck);
 	enabled = regulator_is_enabled(buck);
-	pr_info("%s, get cmd:%s, status:%d, enabled:%d cur voltage:%d\n", __func__, buf, status, enabled, voltage);
+	pr_debug("%s, get cmd:%s, status:%d, enabled:%d cur voltage:%d\n", __func__, buf, status, enabled, voltage);
 	return status ? status : count;
 }
 static DEVICE_ATTR(power_ctrl, S_IWUSR, power_ctrl_get, power_ctrl_set);
 
 static ssize_t screen_get(struct device *device,
-				struct device_attribute *attribute,
-				char *buffer)
+						  struct device_attribute *attribute,
+						  char *buffer)
 {
 	int value;
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(device);
@@ -306,8 +306,8 @@ static ssize_t screen_get(struct device *device,
 static DEVICE_ATTR(screen, S_IRUSR | S_IWUSR, screen_get, NULL);
 
 static ssize_t hw_reset_set(struct device *dev,
-			    struct device_attribute *attr, const char *buf,
-			    size_t count)
+							struct device_attribute *attr, const char *buf,
+							size_t count)
 {
 	int ret;
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
@@ -325,44 +325,44 @@ static ssize_t hw_reset_set(struct device *dev,
 static DEVICE_ATTR(hw_reset, S_IWUSR, NULL, hw_reset_set);
 
 /**
-* sysfs node for controlling whether the driver is allowed
-* to wake up the platform on interrupt.
-*/
+ * sysfs node for controlling whether the driver is allowed
+ * to wake up the platform on interrupt.
+ */
 static ssize_t wakeup_enable_set(struct device *dev,
-				 struct device_attribute *attr, const char *buf,
-				 size_t count)
+								 struct device_attribute *attr, const char *buf,
+								 size_t count)
 {
-/*	struct fpc1022_data *fpc1022 = dev_get_drvdata(dev); */
+	__maybe_unused struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
 
-/*
-	if (!strncmp(buf, "enable", strlen("enable"))) {
-		fpc1022->wakeup_enabled = true;
-		smp_wmb();
-	} else if (!strncmp(buf, "disable", strlen("disable"))) {
-		fpc1022->wakeup_enabled = false;
-		smp_wmb();
-	} else
-		return -EINVAL;
-*/
+	/*
+	 *	if (!strncmp(buf, "enable", strlen("enable"))) {
+	 *		fpc1022->wakeup_enabled = true;
+	 *		smp_wmb();
+} else if (!strncmp(buf, "disable", strlen("disable"))) {
+	fpc1022->wakeup_enabled = false;
+	smp_wmb();
+} else
+	return -EINVAL;
+	*/
 	return count;
 }
 
 static DEVICE_ATTR(wakeup_enable, S_IWUSR, NULL, wakeup_enable_set);
 
 /**
-* sysfs node for sending event to make the system interactive,
-* i.e. waking up
-*/
+ * sysfs node for sending event to make the system interactive,
+ * i.e. waking up
+ */
 static ssize_t do_wakeup_set(struct device *dev,
-			     struct device_attribute *attr, const char *buf,
-			     size_t count)
+							 struct device_attribute *attr, const char *buf,
+							 size_t count)
 {
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
 
 	if (count > 0) {
 		/* Sending power key event creates a toggling
-		   effect that may be desired. It could be
-		   replaced by another event such as KEY_WAKEUP. */
+		 *		   effect that may be desired. It could be
+		 *		   replaced by another event such as KEY_WAKEUP. */
 		input_report_key(fpc1022->idev, KEY_POWER, 1);
 		input_report_key(fpc1022->idev, KEY_POWER, 0);
 		input_sync(fpc1022->idev);
@@ -376,8 +376,8 @@ static ssize_t do_wakeup_set(struct device *dev,
 static DEVICE_ATTR(do_wakeup, S_IWUSR, NULL, do_wakeup_set);
 
 static ssize_t clk_enable_set(struct device *dev,
-			      struct device_attribute *attr, const char *buf,
-			      size_t count)
+							  struct device_attribute *attr, const char *buf,
+							  size_t count)
 {
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
 	dev_dbg(fpc1022->dev, " buff is %d, %s\n", *buf, __func__);
@@ -397,7 +397,7 @@ static ssize_t clk_enable_set(struct device *dev,
 		return 1;
 	} else {
 		dev_err(fpc1022->dev, " invalid spi clk parameter %s\n",
-			__func__);
+				__func__);
 		return 0;
 	}
 }
@@ -405,11 +405,11 @@ static ssize_t clk_enable_set(struct device *dev,
 static DEVICE_ATTR(clk_enable, S_IWUSR, NULL, clk_enable_set);
 
 /**
-* sysf node to check the interrupt status of the sensor, the interrupt
-* handler should perform sysf_notify to allow userland to poll the node.
-*/
+ * sysf node to check the interrupt status of the sensor, the interrupt
+ * handler should perform sysf_notify to allow userland to poll the node.
+ */
 static ssize_t irq_get(struct device *device,
-		       struct device_attribute *attribute, char *buffer)
+					   struct device_attribute *attribute, char *buffer)
 {
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(device);
 	int irq = __gpio_get_value(fpc1022->irq_gpio);
@@ -417,12 +417,12 @@ static ssize_t irq_get(struct device *device,
 }
 
 /**
-* writing to the irq node will just drop a printk message
-* and return success, used for latency measurement.
-*/
+ * writing to the irq node will just drop a printk message
+ * and return success, used for latency measurement.
+ */
 static ssize_t irq_ack(struct device *device,
-		       struct device_attribute *attribute,
-		       const char *buffer, size_t count)
+					   struct device_attribute *attribute,
+					   const char *buffer, size_t count)
 {
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(device);
 	dev_dbg(fpc1022->dev, "%s\n", __func__);
@@ -433,8 +433,8 @@ static DEVICE_ATTR(irq, S_IRUSR | S_IWUSR, irq_get, irq_ack);
 
 
 static ssize_t fingerdown_wait_set(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
+								   struct device_attribute *attr,
+								   const char *buf, size_t count)
 {
 	struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
 
@@ -452,7 +452,7 @@ static ssize_t fingerdown_wait_set(struct device *dev,
 static DEVICE_ATTR(fingerdown_wait, S_IWUSR, NULL, fingerdown_wait_set);
 
 static ssize_t fpc_ic_is_exist(struct device *device,
-			       struct device_attribute *attribute, char *buffer)
+							   struct device_attribute *attribute, char *buffer)
 {
 	int fpc_exist = 0;
 	if (fpc1022_fp_exist) {
@@ -485,7 +485,7 @@ static const struct attribute_group attribute_group = {
 #ifndef FPC_DRM_INTERFACE_WA
 static void notification_work(struct work_struct *work)
 {
-	pr_info("%s: fpc fp unblank\n", __func__);
+	pr_debug("%s: fpc fp unblank\n", __func__);
 	mtk_drm_early_resume(FP_UNLOCK_REJECTION_TIMEOUT);
 	//mtk_dsi_enable_ext_interface(FP_UNLOCK_REJECTION_TIMEOUT);
 }
@@ -509,11 +509,11 @@ static irqreturn_t fpc1022_irq_handler(int irq, void *handle)
 	sysfs_notify(&fpc1022->dev->kobj, NULL, dev_attr_irq.attr.name);
 
 	if (fpc1022->wait_finger_down && fpc1022->fb_black) {
-		pr_info("%s enter fingerdown & fb_black then schedule_work\n", __func__);
+		pr_debug("%s enter fingerdown & fb_black then schedule_work\n", __func__);
 		fpc1022->wait_finger_down = false;
-#ifndef FPC_DRM_INTERFACE_WA
+		#ifndef FPC_DRM_INTERFACE_WA
 		schedule_work(&fpc1022->work);
-#endif
+		#endif
 	}
 
 	return IRQ_HANDLED;
@@ -522,10 +522,10 @@ static irqreturn_t fpc1022_irq_handler(int irq, void *handle)
 
 #ifndef FPC_DRM_INTERFACE_WA
 static int fpc_fb_notif_callback(struct notifier_block *nb,
-				 unsigned long event, void *data)
+								 unsigned long event, void *data)
 {
 	struct fpc1022_data *fpc1022 = container_of(nb, struct fpc1022_data,
-						    fb_notifier);
+												fb_notifier);
 	struct fb_event *evdata = data;
 	unsigned int blank;
 
@@ -535,20 +535,20 @@ static int fpc_fb_notif_callback(struct notifier_block *nb,
 	if (event != MI_DISP_DPMS_EVENT)
 		return 0;
 
-	pr_info("[info] %s value = %d blank = %d\n", __func__, (int)event, blank = *(int *)(evdata->data));
+	pr_debug("[info] %s value = %d blank = %d\n", __func__, (int)event, blank = *(int *)(evdata->data));
 
 	if (evdata && evdata->data && event == MI_DISP_DPMS_EVENT) {
 		blank = *(int *)(evdata->data);
 		switch (blank) {
 			case MI_DISP_DPMS_POWERDOWN:
-				pr_info("[info] %s lcd off notify\n", __func__);
+				pr_debug("[info] %s lcd off notify\n", __func__);
 				mutex_lock(&fpc1022->fb_lock);
 				fpc1022->fb_black = true;
 				mutex_unlock(&fpc1022->fb_lock);
 				sysfs_notify(&fpc1022->dev->kobj, NULL, dev_attr_screen.attr.name);
 				break;
 			case MI_DISP_DPMS_ON:
-				pr_info("[info] %s lcd on notify\n", __func__);
+				pr_debug("[info] %s lcd on notify\n", __func__);
 				mutex_lock(&fpc1022->fb_lock);
 				fpc1022->fb_black = false;
 				mutex_unlock(&fpc1022->fb_lock);
@@ -565,170 +565,170 @@ static int fpc_fb_notif_callback(struct notifier_block *nb,
 #if 0
 static int fpc1022_platform_probe(struct platform_device *pldev)
 {
-	int ret = 0;
-	int irqf;
-	u32 val;
-	const char *idev_name;
-	struct device *dev = &pldev->dev;
-	struct device_node *np = dev->of_node;
+int ret = 0;
+int irqf;
+u32 val;
+const char *idev_name;
+struct device *dev = &pldev->dev;
+struct device_node *np = dev->of_node;
 
-	dev_info(dev, "%s\n", __func__);
-	dev_info(dev, "%s test new\n", __func__);
+dev_info(dev, "%s\n", __func__);
+dev_info(dev, "%s test new\n", __func__);
 
-	if (!np) {
-		dev_err(dev, "no of node found\n");
-		ret = -EINVAL;
-		goto err_no_of_node;
+if (!np) {
+	dev_err(dev, "no of node found\n");
+	ret = -EINVAL;
+	goto err_no_of_node;
 	}
 
 	fpc1022 = devm_kzalloc(dev, sizeof(*fpc1022), GFP_KERNEL);
 	if (!fpc1022) {
 		dev_err(dev,
-			"failed to allocate memory for struct fpc1022_data\n");
+		"failed to allocate memory for struct fpc1022_data\n");
 		ret = -ENOMEM;
 		goto err_fpc1022_malloc;
-	}
-
-        spi_fingerprint=fpc1022->spi;
-	//workaround to solve two spi device
-	if (spi_fingerprint == NULL) {
-		pr_notice("%s Line:%d spi device is NULL,cannot spi transfer\n",
-			  __func__, __LINE__);
-		goto err_fpc1022_malloc;
-	} else {
-		fpc1022->spi = spi_fingerprint;
-		buck = regulator_get(&fpc1022->spi->dev, "mt6368_vibr");
-		if (buck == NULL) {
-			dev_err(dev, "failed to get vibr!!\n");
-			goto error_regulator_enable;
-		} else {
-			ret = regulator_set_voltage(buck, 1800000, 1800000);
-			if (ret < 0) {
-				dev_err(dev, "regulator_set fail");
-				goto error_regulator_enable;
-			}
-			ret = regulator_set_load(buck, 200000);
-			if (ret < 0) {
-				dev_err(dev, "regulator_set_load failed");
-				goto error_regulator_enable;
-			}
-			ret = regulator_enable(buck);
-			if (ret < 0) {
-				dev_err(dev, "regulator_enable fail!!\n");
-				goto error_regulator_enable;
-			}
-			ret = regulator_get_voltage(buck);
-			dev_err(dev, "regulator_value %d!!\n", ret);
 		}
-		ret = check_hwid(fpc1022->spi);
-		if (ret < 0) {
-			pr_notice("%s: %d get chipid fail. now exit\n",
-				  __func__, __LINE__);
-			return -EINVAL;
-                        goto error_regulator_enable;
-		}
-		fpc1022_fp_exist = true;
 
-		fpc1022->spi = spi_fingerprint;
-		/********xinan_bp for dual_TA begain *********/
-		memcpy(&uuid_fp, &uuid_ta_fpc, sizeof(struct TEEC_UUID));
-		/********xinan_bp for dual_TA end *********/
-	}
+		spi_fingerprint=fpc1022->spi;
+		//workaround to solve two spi device
+		if (spi_fingerprint == NULL) {
+			pr_notice("%s Line:%d spi device is NULL,cannot spi transfer\n",
+			__func__, __LINE__);
+			goto err_fpc1022_malloc;
+			} else {
+				fpc1022->spi = spi_fingerprint;
+				buck = regulator_get(&fpc1022->spi->dev, "mt6368_vibr");
+				if (buck == NULL) {
+					dev_err(dev, "failed to get vibr!!\n");
+					goto error_regulator_enable;
+					} else {
+						ret = regulator_set_voltage(buck, 1800000, 1800000);
+						if (ret < 0) {
+							dev_err(dev, "regulator_set fail");
+							goto error_regulator_enable;
+							}
+							ret = regulator_set_load(buck, 200000);
+							if (ret < 0) {
+								dev_err(dev, "regulator_set_load failed");
+								goto error_regulator_enable;
+								}
+								ret = regulator_enable(buck);
+								if (ret < 0) {
+									dev_err(dev, "regulator_enable fail!!\n");
+									goto error_regulator_enable;
+									}
+									ret = regulator_get_voltage(buck);
+									dev_err(dev, "regulator_value %d!!\n", ret);
+									}
+									ret = check_hwid(fpc1022->spi);
+									if (ret < 0) {
+										pr_notice("%s: %d get chipid fail. now exit\n",
+										__func__, __LINE__);
+										return -EINVAL;
+										goto error_regulator_enable;
+										}
+										fpc1022_fp_exist = true;
 
-	fpc1022->dev = dev;
-	dev_set_drvdata(dev, fpc1022);
-	fpc1022->pldev = pldev;
+										fpc1022->spi = spi_fingerprint;
+										/********xinan_bp for dual_TA begain *********/
+										memcpy(&uuid_fp, &uuid_ta_fpc, sizeof(struct TEEC_UUID));
+										/********xinan_bp for dual_TA end *********/
+										}
 
-	fpc1022->pinctrl = devm_pinctrl_get(dev);
-	if (IS_ERR(fpc1022->pinctrl)) {
-		dev_err(dev, "Cannot find pinctrl!");
-		ret = PTR_ERR(fpc1022->pinctrl);
-		goto err_pinctrl_get;
-	}
-	//fpc1022->st_irq = pinctrl_lookup_state(fpc1022->pinctrl, "fpc_irq");
-	fpc1022->st_irq = pinctrl_lookup_state(fpc1022->pinctrl, "default");
-	if (IS_ERR(fpc1022->st_irq)) {
-		ret = PTR_ERR(fpc1022->st_irq);
-		dev_err(dev, "pinctrl err, irq\n");
-		//goto err_lookup_state;
-	}
-	//C3D project workaround, 2 spi device on spi1, just use miso as 'cs-gpios', change to spi mode.
-	/*
-	   fpc1022->pins_miso_spi = pinctrl_lookup_state(fpc1022->pinctrl, "miso_spi");
-	   if (IS_ERR(fpc1022->pins_miso_spi)) {
-	   ret = PTR_ERR(fpc1022->pins_miso_spi);
-	   dev_err(dev, "pinctrl err, miso_spi\n");
-	   goto err_lookup_state;
-	   }
-	 */
-	fpc1022->st_rst_h =
-	    pinctrl_lookup_state(fpc1022->pinctrl, "reset_high");
-	if (IS_ERR(fpc1022->st_rst_h)) {
-		ret = PTR_ERR(fpc1022->st_rst_h);
-		dev_err(dev, "pinctrl err, rst_high\n");
-		goto err_lookup_state;
-	}
+										fpc1022->dev = dev;
+										dev_set_drvdata(dev, fpc1022);
+										fpc1022->pldev = pldev;
 
-	fpc1022->st_rst_l = pinctrl_lookup_state(fpc1022->pinctrl, "reset_low");
-	if (IS_ERR(fpc1022->st_rst_l)) {
-		ret = PTR_ERR(fpc1022->st_rst_l);
-		dev_err(dev, "pinctrl err, rst_low\n");
-		goto err_lookup_state;
-	}
-	fpc1022_get_irqNum(fpc1022);
+										fpc1022->pinctrl = devm_pinctrl_get(dev);
+										if (IS_ERR(fpc1022->pinctrl)) {
+											dev_err(dev, "Cannot find pinctrl!");
+											ret = PTR_ERR(fpc1022->pinctrl);
+											goto err_pinctrl_get;
+											}
+											//fpc1022->st_irq = pinctrl_lookup_state(fpc1022->pinctrl, "fpc_irq");
+											fpc1022->st_irq = pinctrl_lookup_state(fpc1022->pinctrl, "default");
+											if (IS_ERR(fpc1022->st_irq)) {
+												ret = PTR_ERR(fpc1022->st_irq);
+												dev_err(dev, "pinctrl err, irq\n");
+												//goto err_lookup_state;
+												}
+												//C3D project workaround, 2 spi device on spi1, just use miso as 'cs-gpios', change to spi mode.
+												/*
+												 *	   fpc1022->pins_miso_spi = pinctrl_lookup_state(fpc1022->pinctrl, "miso_spi");
+												 *	   if (IS_ERR(fpc1022->pins_miso_spi)) {
+												 *	   ret = PTR_ERR(fpc1022->pins_miso_spi);
+												 *	   dev_err(dev, "pinctrl err, miso_spi\n");
+												 *	   goto err_lookup_state;
+												 *	   }
+												 */
+												fpc1022->st_rst_h =
+												pinctrl_lookup_state(fpc1022->pinctrl, "reset_high");
+												if (IS_ERR(fpc1022->st_rst_h)) {
+													ret = PTR_ERR(fpc1022->st_rst_h);
+													dev_err(dev, "pinctrl err, rst_high\n");
+													goto err_lookup_state;
+													}
 
-	ret = of_property_read_u32(np, "fpc,event-type", &val);
-	fpc1022->event_type = ret < 0 ? EV_MSC : val;
+													fpc1022->st_rst_l = pinctrl_lookup_state(fpc1022->pinctrl, "reset_low");
+													if (IS_ERR(fpc1022->st_rst_l)) {
+														ret = PTR_ERR(fpc1022->st_rst_l);
+														dev_err(dev, "pinctrl err, rst_low\n");
+														goto err_lookup_state;
+														}
+														fpc1022_get_irqNum(fpc1022);
 
-	ret = of_property_read_u32(np, "fpc,event-code", &val);
-	fpc1022->event_code = ret < 0 ? MSC_SCAN : val;
+														ret = of_property_read_u32(np, "fpc,event-type", &val);
+														fpc1022->event_type = ret < 0 ? EV_MSC : val;
 
-	fpc1022->idev = devm_input_allocate_device(dev);
-	if (!fpc1022->idev) {
-		dev_err(dev, "failed to allocate input device\n");
-		ret = -ENOMEM;
-		goto err_input_malloc;
-	}
+														ret = of_property_read_u32(np, "fpc,event-code", &val);
+														fpc1022->event_code = ret < 0 ? MSC_SCAN : val;
 
-	input_set_capability(fpc1022->idev, fpc1022->event_type,
-			     fpc1022->event_code);
+														fpc1022->idev = devm_input_allocate_device(dev);
+														if (!fpc1022->idev) {
+															dev_err(dev, "failed to allocate input device\n");
+															ret = -ENOMEM;
+															goto err_input_malloc;
+															}
 
-	if (!of_property_read_string(np, "input-device-name", &idev_name)) {
-		fpc1022->idev->name = idev_name;
-	} else {
-		snprintf(fpc1022->idev_name, sizeof(fpc1022->idev_name),
-			 "fpc_irq@%s", dev_name(dev));
-		fpc1022->idev->name = fpc1022->idev_name;
-	}
+															input_set_capability(fpc1022->idev, fpc1022->event_type,
+															fpc1022->event_code);
 
-	/* Also register the key for wake up */
-	set_bit(EV_KEY, fpc1022->idev->evbit);
-	set_bit(EV_PWR, fpc1022->idev->evbit);
-	set_bit(KEY_WAKEUP, fpc1022->idev->keybit);
-	set_bit(KEY_POWER, fpc1022->idev->keybit);
-	ret = input_register_device(fpc1022->idev);
-	atomic_set(&fpc1022->wakeup_enabled, 1);
+															if (!of_property_read_string(np, "input-device-name", &idev_name)) {
+																fpc1022->idev->name = idev_name;
+																} else {
+																	snprintf(fpc1022->idev_name, sizeof(fpc1022->idev_name),
+																	"fpc_irq@%s", dev_name(dev));
+																	fpc1022->idev->name = fpc1022->idev_name;
+																	}
 
-	if (ret) {
-		dev_err(dev, "failed to register input device\n");
-		goto err_register_input;
-	}
+																	/* Also register the key for wake up */
+																	set_bit(EV_KEY, fpc1022->idev->evbit);
+																	set_bit(EV_PWR, fpc1022->idev->evbit);
+																	set_bit(KEY_WAKEUP, fpc1022->idev->keybit);
+																	set_bit(KEY_POWER, fpc1022->idev->keybit);
+																	ret = input_register_device(fpc1022->idev);
+																	atomic_set(&fpc1022->wakeup_enabled, 1);
 
-	irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT;
-	if (of_property_read_bool(dev->of_node, "fpc,enable-wakeup")) {
-		irqf |= IRQF_NO_SUSPEND;
-		device_init_wakeup(dev, 1);
-	}
+																	if (ret) {
+																		dev_err(dev, "failed to register input device\n");
+																		goto err_register_input;
+																		}
 
-	mutex_init(&fpc1022->lock);
+																		irqf = IRQF_TRIGGER_RISING | IRQF_ONESHOT;
+																		if (of_property_read_bool(dev->of_node, "fpc,enable-wakeup")) {
+																			irqf |= IRQF_NO_SUSPEND;
+																			device_init_wakeup(dev, 1);
+																			}
 
-	ret = devm_request_threaded_irq(dev, fpc1022->irq_num,
-					NULL, fpc1022_irq_handler, irqf,
-					dev_name(dev), fpc1022);
+																			mutex_init(&fpc1022->lock);
 
-	if (ret) {
-		dev_err(dev, "could not request irq %d\n", fpc1022->irq_num);
-		goto err_request_irq;
+																			ret = devm_request_threaded_irq(dev, fpc1022->irq_num,
+																			NULL, fpc1022_irq_handler, irqf,
+dev_name(dev), fpc1022);
+
+if (ret) {
+	dev_err(dev, "could not request irq %d\n", fpc1022->irq_num);
+	goto err_request_irq;
 	}
 	dev_info(dev, "requested irq %d\n", fpc1022->irq_num);
 
@@ -740,72 +740,72 @@ static int fpc1022_platform_probe(struct platform_device *pldev)
 	if (ret) {
 		dev_err(dev, "could not create sysfs\n");
 		goto err_create_sysfs;
-	}
+		}
 
-	fpc1022->fb_black = false;
-	fpc1022->wait_finger_down = false;
+		fpc1022->fb_black = false;
+		fpc1022->wait_finger_down = false;
 
-#ifndef FPC_DRM_INTERFACE_WA
-	INIT_WORK(&fpc1022->work, notification_work);
-	fpc1022->fb_notifier.notifier_call = fpc_fb_notif_callback;
-	mi_disp_register_client(&fpc1022->fb_notifier);
-#endif
+		#ifndef FPC_DRM_INTERFACE_WA
+		INIT_WORK(&fpc1022->work, notification_work);
+		fpc1022->fb_notifier.notifier_call = fpc_fb_notif_callback;
+		mi_disp_register_client(&fpc1022->fb_notifier);
+		#endif
 
-	hw_reset(fpc1022);
-	dev_info(dev, "%s: ok\n", __func__);
+		hw_reset(fpc1022);
+		dev_info(dev, "%s: ok\n", __func__);
 
-	return ret;
+		return ret;
 
-err_create_sysfs:
-	wakeup_source_unregister(fpc1022->ttw_wl);
+		err_create_sysfs:
+		wakeup_source_unregister(fpc1022->ttw_wl);
 
-err_request_irq:
-	mutex_destroy(&fpc1022->lock);
+		err_request_irq:
+		mutex_destroy(&fpc1022->lock);
 
-err_register_input:
-	input_unregister_device(fpc1022->idev);
-error_regulator_enable:
-	fpc1022->spi = NULL;
+		err_register_input:
+		input_unregister_device(fpc1022->idev);
+		error_regulator_enable:
+		fpc1022->spi = NULL;
 
-err_input_malloc:
-err_lookup_state:
-err_pinctrl_get:
-	devm_kfree(dev, fpc1022);
+		err_input_malloc:
+		err_lookup_state:
+		err_pinctrl_get:
+		devm_kfree(dev, fpc1022);
 
-err_fpc1022_malloc:
-err_no_of_node:
+		err_fpc1022_malloc:
+		err_no_of_node:
 
-	return ret;
-}
-#endif
+		return ret;
+		}
+		#endif
 
-__maybe_unused static int fpc1022_platform_remove(struct platform_device *pldev)
-{
-	struct device *dev = &pldev->dev;
-	struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
+		__maybe_unused static int fpc1022_platform_remove(struct platform_device *pldev)
+		{
+			struct device *dev = &pldev->dev;
+			struct fpc1022_data *fpc1022 = dev_get_drvdata(dev);
 
-	dev_info(dev, "%s\n", __func__);
+			dev_info(dev, "%s\n", __func__);
 
-#ifndef FPC_DRM_INTERFACE_WA
-	mi_disp_unregister_client(&fpc1022->fb_notifier);
-#endif
-	sysfs_remove_group(&dev->kobj, &attribute_group);
+			#ifndef FPC_DRM_INTERFACE_WA
+			mi_disp_unregister_client(&fpc1022->fb_notifier);
+			#endif
+			sysfs_remove_group(&dev->kobj, &attribute_group);
 
-        fpc1022->spi = NULL;
+			fpc1022->spi = NULL;
 
-        mutex_destroy(&fpc1022->lock);
-	wakeup_source_unregister(fpc1022->ttw_wl);
+			mutex_destroy(&fpc1022->lock);
+			wakeup_source_unregister(fpc1022->ttw_wl);
 
-	input_unregister_device(fpc1022->idev);
-	devm_kfree(dev, fpc1022);
+			input_unregister_device(fpc1022->idev);
+			devm_kfree(dev, fpc1022);
 
-	return 0;
-}
+			return 0;
+		}
 
-#if 0
-static struct of_device_id fpc1022_of_match[] = {
-	{.compatible = "mediatek,fpc1022_irq",},
-	{}
+		#if 0
+		static struct of_device_id fpc1022_of_match[] = {
+		{.compatible = "mediatek,fpc1022_irq",},
+{}
 };
 
 MODULE_DEVICE_TABLE(of, fpc1022_of_match);
@@ -813,13 +813,13 @@ MODULE_DEVICE_TABLE(of, fpc1022_of_match);
 
 #if 0
 static struct platform_driver fpc1022_driver = {
-	.driver = {
-		   .name = "fpc1022_irq",
-		   .owner = THIS_MODULE,
-		   .of_match_table = fpc1022_of_match,
-		   },
-	.probe = fpc1022_platform_probe,
-	.remove = fpc1022_platform_remove
+.driver = {
+.name = "fpc1022_irq",
+.owner = THIS_MODULE,
+.of_match_table = fpc1022_of_match,
+},
+.probe = fpc1022_platform_probe,
+.remove = fpc1022_platform_remove
 };
 #endif
 
@@ -834,7 +834,7 @@ static int spi_read_hwid(struct spi_device *spi, u8 * rx_buf)
 	xfer = kzalloc(sizeof(*xfer) * 2, GFP_KERNEL);
 	if (xfer == NULL) {
 		dev_err(&spi->dev, "%s, no memory for SPI transfer\n",
-			__func__);
+				__func__);
 		return -ENOMEM;
 	}
 
@@ -845,11 +845,11 @@ static int spi_read_hwid(struct spi_device *spi, u8 * rx_buf)
 	xfer[0].len = 1;
 	xfer[0].delay_usecs = 5;
 
-#ifdef CONFIG_SPI_MT65XX
+	#ifdef CONFIG_SPI_MT65XX
 	xfer[0].speed_hz = spi_speed;
 	pr_err("%s %d, now spi-clock:%d\n",
-	       __func__, __LINE__, xfer[0].speed_hz);
-#endif
+		   __func__, __LINE__, xfer[0].speed_hz);
+	#endif
 
 	spi_message_add_tail(&xfer[0], &msg);
 
@@ -858,9 +858,9 @@ static int spi_read_hwid(struct spi_device *spi, u8 * rx_buf)
 	xfer[1].len = 2;
 	xfer[1].delay_usecs = 5;
 
-#ifdef CONFIG_SPI_MT65XX
+	#ifdef CONFIG_SPI_MT65XX
 	xfer[1].speed_hz = spi_speed;
-#endif
+	#endif
 
 	spi_message_add_tail(&xfer[1], &msg);
 	error = spi_sync(spi, &msg);
@@ -886,34 +886,34 @@ static int check_hwid(struct spi_device *spi)
 	do {
 		spi_read_hwid(spi, tmp_buf);
 		printk(KERN_INFO "%s, fpc1022 chip version is 0x%x, 0x%x\n",
-		       __func__, tmp_buf[0], tmp_buf[1]);
+			   __func__, tmp_buf[0], tmp_buf[1]);
 
 		time_out++;
 
 		hardware_id = ((tmp_buf[0] << 8) | (tmp_buf[1]));
 		pr_err("fpc hardware_id[0]= 0x%x id[1]=0x%x\n", tmp_buf[0],
-		       tmp_buf[1]);
+			   tmp_buf[1]);
 
 		if (((FPC1542_CHIP_MASK_SENSOR_TYPE & hardware_id) == FPC1542_CHIP )||
-		    ((FPC1542_CHIP_MASK_SENSOR_TYPE & hardware_id) == FPC1542SA_CHIP)||
-		    ((FPC1542_CHIP_MASK_SENSOR_TYPE & hardware_id) == FPC1540A_CHIP)) {
+			((FPC1542_CHIP_MASK_SENSOR_TYPE & hardware_id) == FPC1542SA_CHIP)||
+			((FPC1542_CHIP_MASK_SENSOR_TYPE & hardware_id) == FPC1540A_CHIP)) {
 			pr_err("fpc match hardware_id = 0x%x is true\n", hardware_id);
-			error = 0;
-		} else {
-			pr_err("fpc match hardware_id = 0x%x is failed\n", hardware_id);
-			error = -1;
-		}
+		error = 0;
+			} else {
+				pr_err("fpc match hardware_id = 0x%x is failed\n", hardware_id);
+				error = -1;
+			}
 
-		if (!error) {
-			printk(KERN_INFO
-			       "fpc %s, fpc1022 chip version check pass, time_out=%d\n",
-			       __func__, time_out);
-			return 0;
-		}
+			if (!error) {
+				printk(KERN_INFO
+				"fpc %s, fpc1022 chip version check pass, time_out=%d\n",
+		   __func__, time_out);
+				return 0;
+			}
 	} while (time_out < 2);
 
 	printk(KERN_INFO "%s, fpc1022 chip version read failed, time_out=%d\n",
-	       __func__, time_out);
+		   __func__, time_out);
 
 	return -1;
 }
@@ -939,7 +939,7 @@ static int fpc1022_spi_probe(struct spi_device *spi)
 	fpc1022 = devm_kzalloc(dev, sizeof(*fpc1022), GFP_KERNEL);
 	if (!fpc1022) {
 		dev_err(dev,
-			"failed to allocate memory for struct fpc1022_data\n");
+				"failed to allocate memory for struct fpc1022_data\n");
 		ret = -ENOMEM;
 		goto err_fpc1022_malloc;
 	}
@@ -992,15 +992,15 @@ static int fpc1022_spi_probe(struct spi_device *spi)
 	}
 	//C3D project workaround, 2 spi device on spi1, just use miso as 'cs-gpios', change to spi mode.
 	/*
-	   fpc1022->pins_miso_spi = pinctrl_lookup_state(fpc1022->pinctrl, "miso_spi");
-	   if (IS_ERR(fpc1022->pins_miso_spi)) {
-	   ret = PTR_ERR(fpc1022->pins_miso_spi);
-	   dev_err(dev, "pinctrl err, miso_spi\n");
-	   goto err_lookup_state;
-	   }
-	 */
+	 *	   fpc1022->pins_miso_spi = pinctrl_lookup_state(fpc1022->pinctrl, "miso_spi");
+	 *	   if (IS_ERR(fpc1022->pins_miso_spi)) {
+	 *	   ret = PTR_ERR(fpc1022->pins_miso_spi);
+	 *	   dev_err(dev, "pinctrl err, miso_spi\n");
+	 *	   goto err_lookup_state;
+}
+*/
 	fpc1022->st_rst_h =
-	    pinctrl_lookup_state(fpc1022->pinctrl, "reset_high");
+	pinctrl_lookup_state(fpc1022->pinctrl, "reset_high");
 	if (IS_ERR(fpc1022->st_rst_h)) {
 		ret = PTR_ERR(fpc1022->st_rst_h);
 		dev_err(dev, "pinctrl err, rst_high\n");
@@ -1017,9 +1017,9 @@ static int fpc1022_spi_probe(struct spi_device *spi)
 	ret = check_hwid(fpc1022->spi);
 	if (ret < 0) {
 		pr_notice("%s: %d get chipid fail. now exit\n",
-				 __func__, __LINE__);
+				  __func__, __LINE__);
 		ret = -EINVAL;
-                goto error_regulator_enable;
+		goto error_regulator_enable;
 	}
 	fpc1022_fp_exist = true;
 	fpc1022_get_irqNum(fpc1022);
@@ -1038,13 +1038,13 @@ static int fpc1022_spi_probe(struct spi_device *spi)
 	}
 
 	input_set_capability(fpc1022->idev, fpc1022->event_type,
-			     fpc1022->event_code);
+						 fpc1022->event_code);
 
 	if (!of_property_read_string(np, "input-device-name", &idev_name)) {
 		fpc1022->idev->name = idev_name;
 	} else {
 		snprintf(fpc1022->idev_name, sizeof(fpc1022->idev_name),
-			 "fpc_irq@%s", dev_name(dev));
+				 "fpc_irq@%s", dev_name(dev));
 		fpc1022->idev->name = fpc1022->idev_name;
 	}
 
@@ -1071,8 +1071,8 @@ static int fpc1022_spi_probe(struct spi_device *spi)
 	mutex_init(&fpc1022->fb_lock);
 
 	ret = devm_request_threaded_irq(dev, fpc1022->irq_num,
-					NULL, fpc1022_irq_handler, irqf,
-					dev_name(dev), fpc1022);
+									NULL, fpc1022_irq_handler, irqf,
+									dev_name(dev), fpc1022);
 
 	if (ret) {
 		dev_err(dev, "could not request irq %d\n", fpc1022->irq_num);
@@ -1093,37 +1093,37 @@ static int fpc1022_spi_probe(struct spi_device *spi)
 	fpc1022->fb_black = false;
 	fpc1022->wait_finger_down = false;
 
-#ifndef FPC_DRM_INTERFACE_WA
+	#ifndef FPC_DRM_INTERFACE_WA
 	INIT_WORK(&fpc1022->work, notification_work);
 	fpc1022->fb_notifier.notifier_call = fpc_fb_notif_callback;
 	mi_disp_register_client(&fpc1022->fb_notifier);
-#endif
+	#endif
 
 	hw_reset(fpc1022);
 	dev_info(dev, "%s: ok\n", __func__);
 
 	return ret;
 
-err_create_sysfs:
+	err_create_sysfs:
 	wakeup_source_unregister(fpc1022->ttw_wl);
 
-err_request_irq:
+	err_request_irq:
 	mutex_destroy(&fpc1022->lock);
 	mutex_destroy(&fpc1022->fb_lock);
 
-err_register_input:
+	err_register_input:
 	input_unregister_device(fpc1022->idev);
-error_regulator_enable:
+	error_regulator_enable:
 	fpc1022->spi = NULL;
 	regulator_disable(buck);
 
-err_input_malloc:
-err_lookup_state:
-err_pinctrl_get:
+	err_input_malloc:
+	err_lookup_state:
+	err_pinctrl_get:
 	devm_kfree(dev, fpc1022);
 
-err_fpc1022_malloc:
-err_no_of_node:
+	err_fpc1022_malloc:
+	err_no_of_node:
 
 	return ret;
 }
@@ -1142,19 +1142,19 @@ static struct of_device_id fpc1022_spi_of_match[] = {
 
 #if 0
 static struct of_device_id fpc1022_spi_of_match[] = {
-	{.compatible = "mediatek,fingerprint",},	//xpt { .compatible = "ix,btp", },
-	{}
+{.compatible = "mediatek,fingerprint",},	//xpt { .compatible = "ix,btp", },
+{}
 };
 MODULE_DEVICE_TABLE(of, fpc1022_spi_of_match);
 #endif
 
 static struct spi_driver spi_driver = {
 	.driver = {
-		   .name = "btp",
-		   .owner = THIS_MODULE,
-		   .of_match_table = fpc1022_spi_of_match,
-		   .bus = &spi_bus_type,
-		   },
+		.name = "btp",
+		.owner = THIS_MODULE,
+		.of_match_table = fpc1022_spi_of_match,
+		.bus = &spi_bus_type,
+	},
 	.probe = fpc1022_spi_probe,
 	.remove = fpc1022_spi_remove
 };
@@ -1163,28 +1163,28 @@ static int __init fpc1022_init(void)
 {
 	printk(KERN_INFO "%s\n", __func__);
 
-/*
-         if(fp_idx_ic_exist){
-                   printk("fpc1022_init called but there is a idx fp ic exist\n");
-                   return -EINVAL;
-         }
+	/*
+	 *         if(fp_idx_ic_exist){
+	 *                   printk("fpc1022_init called but there is a idx fp ic exist\n");
+	 *                   return -EINVAL;
+}
 */
-/*
-	if (goodix_fp_exist) {
-		pr_err
-		    ("%s goodix sensor has been detected, so exit FPC sensor detect.\n",
-		     __func__);
-		return -EINVAL;
-	}
+	/*
+	 *	if (goodix_fp_exist) {
+	 *		pr_err
+	 *		    ("%s goodix sensor has been detected, so exit FPC sensor detect.\n",
+	 *		     __func__);
+	 *		return -EINVAL;
+}
 */
 
 	if (0 != spi_register_driver(&spi_driver)) {
 		printk(KERN_INFO "%s: register spi driver fail\n",
-		       __func__);
+			   __func__);
 		return -EINVAL;
 	} else
 		printk(KERN_INFO "%s: register spi driver success\n",
-		       __func__);
+			   __func__);
 
 	return 0;
 }
