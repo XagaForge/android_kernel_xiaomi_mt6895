@@ -769,6 +769,7 @@ KBUILD_CFLAGS += -Os
 endif
 
 ifdef CONFIG_LLVM_POLLY
+ifeq ($(call cc-option-yn, -mllvm -polly),y)
 KBUILD_CFLAGS	+= -mllvm -polly \
 		   -mllvm -polly-run-inliner \
 		   -mllvm -polly-ast-use-context \
@@ -793,7 +794,8 @@ endif
 # so we tell Polly to perfom proven DCE on the loops it optimises
 # in order to preserve the overall effect of the linker's DCE.
 ifdef CONFIG_LD_DEAD_CODE_DATA_ELIMINATION
-POLLY_FLAGS	+= -mllvm -polly-run-dce
+KBUILD_CFLAGS	+= -mllvm -polly-run-dce
+endif
 endif
 endif
 
