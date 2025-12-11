@@ -88,9 +88,12 @@
 #define IS_NOT_ALIGN_4(_value)      (((_value) & 0x3) ? TRUE : FALSE)
 #endif /* IS_NOT_ALIGN_4 */
 
+#ifndef MIN
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef MAX
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
-
+#endif
 
 /**
  * Log and level definition
