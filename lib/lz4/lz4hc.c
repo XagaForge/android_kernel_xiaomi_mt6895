@@ -71,8 +71,12 @@ typedef enum { noDictCtx, usingDictCtxHc } dictCtx_directive;
 #define LZ4_OPT_NUM (1 << 12)
 
 /*===   Macros   ===*/
+#ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef MAX
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
 /*===   Levels definition   ===*/
 typedef enum { lz4mid, lz4hc, lz4opt } lz4hc_strat_e;
