@@ -90,7 +90,7 @@ pass_libs=()
 pass_cnt=0
 
 # Get all TARGETS from selftests Makefile
-targets=$(egrep "^TARGETS +|^TARGETS =" Makefile | cut -d "=" -f2)
+targets=$(grep -E "^TARGETS +|^TARGETS =" Makefile | cut -d "=" -f2)
 
 # Initially, in LDLIBS related lines, the dep checker needs
 # to ignore lines containing the following strings:
