@@ -1170,7 +1170,7 @@ static inline bool movable_only_nodes(nodemask_t *nodes)
 {
 	struct zonelist *zonelist;
 	struct zoneref *z;
-	int nid;
+	int __maybe_unused nid;
 
 	if (nodes_empty(*nodes))
 		return false;
