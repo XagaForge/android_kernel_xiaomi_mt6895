@@ -1,4 +1,0 @@
-config CHARGE_PROJECT
-	string "CHARGE_PROJECT"
-	help
-	  Usually use to identify co-package.
