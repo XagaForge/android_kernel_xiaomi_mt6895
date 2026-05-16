@@ -9461,18 +9461,13 @@ int priv_driver_set_country(IN struct net_device *prNetDev,
 
 	if (regd_is_single_sku_en()) {
 		uint8_t aucCountry_code[4] = {0, 0, 0, 0};
-		uint8_t i, count;
 
-		/* command like "COUNTRY US", "COUNTRY US1" and
-		 * "COUNTRY US01"
-		 */
-		count = kalStrnLen(apcArgv[1], sizeof(aucCountry_code));
-		for (i = 0; i < count; i++)
-			aucCountry_code[i] = apcArgv[1][i];
-
+		/* Force US: firmware regulatory DB has fullest band support */
+		aucCountry_code[0] = 'U';
+		aucCountry_code[1] = 'S';
 
 		rStatus = kalIoctl(prGlueInfo, wlanoidSetCountryCode,
-				   &aucCountry_code[0], count,
+				   &aucCountry_code[0], 2,
 				   FALSE, FALSE, TRUE, &u4BufLen);
 		if (rStatus != WLAN_STATUS_SUCCESS)
 			return -1;
@@ -9482,8 +9477,9 @@ int priv_driver_set_country(IN struct net_device *prNetDev,
 
 
 	/* command like "COUNTRY US", "COUNTRY EU" and "COUNTRY JP" */
-	aucCountry[0] = apcArgv[1][0];
-	aucCountry[1] = apcArgv[1][1];
+	/* Force US: firmware regulatory DB has fullest band support */
+	aucCountry[0] = 'U';
+	aucCountry[1] = 'S';
 
 	rStatus = kalIoctl(prGlueInfo, wlanoidSetCountryCode,
 			   &aucCountry[0], 2, FALSE, FALSE, TRUE,

@@ -439,8 +439,9 @@ int mtk_cfg80211_vendor_set_country_code(struct wiphy
 	attr = (struct nlattr *)data;
 	if (attr->nla_type == WIFI_ATTRIBUTE_COUNTRY_CODE &&
 			nla_len(attr) >= 2) {
-		country[0] = *((uint8_t *)nla_data(attr));
-		country[1] = *((uint8_t *)nla_data(attr) + 1);
+		/* Force US: firmware regulatory DB has fullest band support */
+		country[0] = 'U';
+		country[1] = 'S';
 	}
 
 	DBGLOG(REQ, INFO, "Set country code: %c%c\n", country[0],
