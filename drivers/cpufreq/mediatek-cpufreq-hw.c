@@ -14,6 +14,8 @@
 #include <linux/of_platform.h>
 #include <linux/pm_qos.h>
 #include <linux/slab.h>
+#include <trace/hooks/sched.h>
+#include "sched.h"
 
 #define LUT_MAX_ENTRIES			32U
 #define LUT_FREQ			GENMASK(11, 0)
@@ -22,6 +24,12 @@
 #define SVS_HW_STATUS			BIT(1)
 #define POLL_USEC			1000
 #define TIMEOUT_USEC			300000
+
+#define EAS_NODE_NAME "eas_info"
+#define EAS_PROP_CSRAM "csram-base"
+#define EAS_PROP_OFFS_CAP "offs-cap"
+#define EAS_PROP_OFFS_THERMAL_S "offs-thermal-limit"
+#define THERMAL_INFO_SIZE 200
 
 enum {
 	REG_FREQ_LUT_TABLE,
@@ -41,6 +49,14 @@ struct cpufreq_mtk {
 	cpumask_t related_cpus;
 };
 
+
+static struct eas_info {
+        unsigned int csram_base;
+        unsigned int offs_cap;
+        unsigned int offs_thermal_limit_s;
+        bool available;
+} eas_node;
+
 static const u16 cpufreq_mtk_offsets[REG_ARRAY_SIZE] = {
 	[REG_FREQ_LUT_TABLE]	= 0x0,
 	[REG_FREQ_ENABLE]	= 0x84,
@@ -51,6 +67,8 @@ static const u16 cpufreq_mtk_offsets[REG_ARRAY_SIZE] = {
 };
 
 static struct cpufreq_mtk *mtk_freq_domain_map[NR_CPUS];
+
+static void __iomem *sram_base_addr;
 
 static int look_up_cpu(struct device *cpu_dev)
 {
@@ -282,6 +300,59 @@ static int mtk_get_related_cpus(int index, struct cpufreq_mtk *c)
 	return 0;
 }
 
+static int init_sram_info(void)
+{
+	struct device_node *dn = NULL;
+
+	dn = of_find_node_by_name(NULL, EAS_NODE_NAME);
+
+	of_property_read_u32(dn, EAS_PROP_CSRAM, &eas_node.csram_base);
+	of_property_read_u32(dn, EAS_PROP_OFFS_CAP, &eas_node.offs_cap);
+	of_property_read_u32_index(dn, EAS_PROP_OFFS_THERMAL_S, 0,
+				   &eas_node.offs_thermal_limit_s);
+
+	sram_base_addr = ioremap(eas_node.csram_base + eas_node.offs_thermal_limit_s,
+				 THERMAL_INFO_SIZE);
+
+	if (!sram_base_addr) {
+		pr_info("Remap thermal info failed\n");
+		return -EIO;
+	}
+
+	return 0;
+}
+
+static void mtk_cpufreq_tick_entry(void *data, struct rq *rq)
+{
+	void __iomem *base = sram_base_addr;
+	struct em_perf_domain *pd;
+	int this_cpu, gear_id, opp_idx, offset;
+	unsigned int freq_thermal;
+	unsigned long max_capacity, capacity;
+	u32 opp_ceiling;
+
+	this_cpu = cpu_of(rq);
+
+	pd = em_cpu_get(this_cpu);
+	if (!pd)
+		return;
+
+	if (this_cpu != cpumask_first(to_cpumask(pd->cpus)))
+		return;
+
+	gear_id = topology_physical_package_id(this_cpu);
+	offset = gear_id << 2;
+	opp_ceiling = ioread32(base + offset);
+	opp_idx = pd->nr_perf_states - opp_ceiling - 1;
+
+	freq_thermal = pd->table[opp_idx].frequency;
+	max_capacity = arch_scale_cpu_capacity(this_cpu);
+	capacity = freq_thermal * max_capacity;
+	capacity /= pd->table[pd->nr_perf_states-1].frequency;
+
+	arch_set_thermal_pressure(to_cpumask(pd->cpus), max_capacity - capacity);
+}
+
 static int mtk_cpu_resources_init(struct platform_device *pdev,
 				  unsigned int cpu, int index,
 				  const u16 *offsets)
@@ -359,6 +430,12 @@ static int mtk_cpufreq_hw_driver_probe(struct platform_device *pdev)
 		dev_info(&pdev->dev, "CPUFreq HW driver failed to register\n");
 		return ret;
 	}
+
+	ret = init_sram_info();
+	if (ret)
+		return ret;
+
+	BUG_ON(register_trace_android_rvh_tick_entry(mtk_cpufreq_tick_entry, NULL));
 
 	return 0;
 }
