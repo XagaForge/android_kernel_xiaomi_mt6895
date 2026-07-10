@@ -12,12 +12,16 @@ POST_DEFCONFIG_CMDS="rm ${ROOT_DIR}/${KERNEL_DIR}/arch/arm64/configs/${DEFCONFIG
 
 MAKE_GOALS="${MAKE_GOALS}
 vendor/mediatek/mt6895.dtb
+vendor/mediatek/xaga.dtbo
+vendor/mediatek/plato.dtbo
 Image.gz
 "
 
 FILES="${FILES}
 arch/arm64/boot/Image.gz
 arch/arm64/boot/dts/vendor/mediatek/mt6895.dtb
+arch/arm64/boot/dts/vendor/mediatek/xaga.dtbo
+arch/arm64/boot/dts/vendor/mediatek/plato.dtbo
 vmlinux
 System.map
 "

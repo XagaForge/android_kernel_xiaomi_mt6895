@@ -8,4 +8,4 @@
 	svp-region-based-size = <0 0x2000000>;
 	svp-page-based-size = <0 0x19000000>;
 };
-#include <xaga/cust.dtsi>
+#include "cust/xaga.dtsi"
