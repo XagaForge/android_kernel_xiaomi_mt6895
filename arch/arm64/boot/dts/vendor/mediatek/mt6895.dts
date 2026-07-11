@@ -163,7 +163,7 @@
                         8250.nr_uarts=4 \
 			rcupdate.rcu_expedited=1 rcu_nocbs=0-7 \
 			transparent_hugepage=never swiotlb=noforce \
-			firmware_class.path=/vendor/firmware";
+			firmware_class.path=/vendor/firmware fenrir=true";
 		kaslr-seed = <0 0>;
 	};
 
