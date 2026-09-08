@@ -1197,9 +1197,11 @@ static void mtk_aie_vb2_stop_streaming(struct vb2_queue *vq)
 
 static void mtk_aie_vb2_request_complete(struct vb2_buffer *vb)
 {
+#if CHECK_SERVICE_0
 	struct mtk_aie_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 
 	v4l2_ctrl_request_complete(vb->req_obj.req, &ctx->hdl);
+#endif
 }
 
 static int mtk_aie_querycap(struct file *file, void *fh,
@@ -1586,8 +1588,8 @@ static int mtk_vfd_open(struct file *filp)
 	return 0;
 
 err_free_ctrl_handler:
+#if CHECK_SERVICE_0
 	v4l2_ctrl_handler_free(&ctx->hdl);
-#if CHECK_SERVICE_0 //Remove CID
 err_fh_exit:
 #endif
 	v4l2_fh_exit(&ctx->fh);
@@ -1603,7 +1605,9 @@ static int mtk_vfd_release(struct file *filp)
 
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 
+#if CHECK_SERVICE_0
 	v4l2_ctrl_handler_free(&ctx->hdl);
+#endif
 	v4l2_fh_del(&ctx->fh);
 	v4l2_fh_exit(&ctx->fh);
 
@@ -1736,8 +1740,10 @@ static void mtk_aie_device_run(void *priv)
 	/* mmdvfs */
 	//mtk_aie_mmdvfs_set(fd, 1, fd->aie_cfg->freq_level);
 
+#if CHECK_SERVICE_0
 	/* Complete request controls if any */
 	v4l2_ctrl_request_complete(src_buf->vb2_buf.req_obj.req, &ctx->hdl);
+#endif
 
 	atomic_inc(&fd->num_composing);
 
