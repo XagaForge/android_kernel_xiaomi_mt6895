@@ -22,6 +22,10 @@
 #include <linux/delay.h>
 #include "nt36xxx.h"
 
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PEARL)
+extern int update_palm_sensor_value(int value);
+#endif
+
 #if NVT_TOUCH_EXT_PROC
 #define NVT_FW_VERSION				"nvt_fw_version"
 #define NVT_BASELINE				"nvt_baseline"
@@ -641,6 +645,11 @@ int32_t nvt_set_pocket_palm_switch(uint8_t pocket_palm_switch)
 	if (pocket_palm_switch == 0) {
 		/* pocket palm disable */
 		buf[1] = 0x74;
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PEARL)
+        #if IS_ENABLED(CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE)
+		update_palm_sensor_value(0);
+        #endif
+#endif
 	} else if (pocket_palm_switch == 1) {
 		/* pocket palm enable */
 		buf[1] = 0x73;

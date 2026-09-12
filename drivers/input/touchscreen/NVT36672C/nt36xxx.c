@@ -1655,8 +1655,13 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 			input_report_abs(ts->input_dev, ABS_MT_POSITION_Y, input_y);
 			/*input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, input_w);*/
 			/*input_report_abs(ts->input_dev, ABS_MT_PRESSURE, input_p);*/
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PEARL)
+#else
+
 #if IS_ENABLED(CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE)
 			last_touch_events_collect(input_id - 1, 1);
+#endif
+
 #endif
 
 #if MT_PROTOCOL_B
@@ -1676,8 +1681,13 @@ static irqreturn_t nvt_ts_work_func(int irq, void *data)
 			/*input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0);*/
 			input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, false);
 			/*input_report_abs(ts->input_dev, ABS_MT_PRESSURE, 0); */
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PEARL)
+#else
+
 #if IS_ENABLED(CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE)
 			last_touch_events_collect(i, 0);
+#endif
+
 #endif
 			if (finger_cnt == 0 && test_bit(i, ts->slot_map)) {
 				input_report_key(ts->input_dev, BTN_TOUCH, 0);
@@ -1862,7 +1872,11 @@ int32_t nvt_check_palm(uint8_t input_id, uint8_t *data)
 
 	if ((input_id == DATA_PROTOCOL) && (func_type == FUNCPAGE_PALM)) {
 		ret = palm_state;
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PEARL)
+		if ((palm_state == PACKET_PALM_ON) && ts->palm_sensor_switch) {
+#else
 		if (palm_state == PACKET_PALM_ON) {
+#endif
 			NVT_LOG("get packet palm on event.\n");
 			update_palm_sensor_value(1);
 		} else if (palm_state == PACKET_PALM_OFF) {
@@ -2065,7 +2079,7 @@ static int nvt_set_cur_value(int nvt_mode, int nvt_value)
 	uint8_t temp_value = 0;
 	uint8_t ret = 0;
 
-	if (nvt_mode >= Touch_Mode_NUM && nvt_mode < 0) {
+	if (nvt_mode >= Touch_Mode_NUM || nvt_mode < 0) {
 		NVT_ERR("%s, nvt mode is error:%d", __func__, nvt_mode);
 		return -EINVAL;
 	}
@@ -2825,7 +2839,12 @@ static int32_t nvt_ts_probe(struct spi_device *client)
 	INIT_DELAYED_WORK(&ts->nvt_fwu_work, Boot_Update_Firmware);
 	/* please make sure boot update start after display reset(RESX)
 	   sequence, usually ts driver probs after reset is done. */
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PEARL)
+	queue_delayed_work(nvt_fwu_wq, &ts->nvt_fwu_work, msecs_to_jiffies(10000));
+#else
 	queue_delayed_work(nvt_fwu_wq, &ts->nvt_fwu_work, msecs_to_jiffies(100));
+#endif
+
 #endif
 
 	NVT_LOG("NVT_TOUCH_ESD_PROTECT is %d\n", NVT_TOUCH_ESD_PROTECT);
@@ -3264,8 +3283,13 @@ static int32_t nvt_ts_suspend(struct device *dev)
 		/*input_report_abs(ts->input_dev, ABS_MT_TOUCH_MAJOR, 0);*/
 		input_report_abs(ts->input_dev, ABS_MT_PRESSURE, 0);
 		input_mt_report_slot_state(ts->input_dev, MT_TOOL_FINGER, 0);
+#if IS_ENABLED(CONFIG_TARGET_PRODUCT_PEARL)
+#else
+
 #if IS_ENABLED(CONFIG_TOUCHSCREEN_XIAOMI_TOUCHFEATURE)
 		last_touch_events_collect(i, 0);
+#endif
+
 #endif
 	}
 #endif

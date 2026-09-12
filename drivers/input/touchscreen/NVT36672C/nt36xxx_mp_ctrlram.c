@@ -22,6 +22,7 @@
 #include <linux/slab.h>
 #include <asm/uaccess.h>
 #include <linux/firmware.h>
+#include <linux/compiler.h>
 
 #include "nt36xxx.h"
 #include "nt36xxx_mp_ctrlram.h"
@@ -2152,7 +2153,12 @@ static ssize_t nvt_selftest_read(struct file *file, char __user *buf, size_t cou
 static ssize_t nvt_selftest_write(struct file *file, const char __user *buf, size_t count, loff_t *pos)
 {
 	int retval = 0;
-	char tmp[6];
+	char tmp[6] = {'\0'};
+
+	if (unlikely(count > sizeof(tmp))) {
+		retval = -EINVAL;
+		goto out;
+	}
 
 	if (copy_from_user(tmp, buf, count)) {
 		retval = -EFAULT;
