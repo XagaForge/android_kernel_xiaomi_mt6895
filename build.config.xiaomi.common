@@ -14,6 +14,7 @@ MAKE_GOALS="${MAKE_GOALS}
 vendor/mediatek/mt6895.dtb
 vendor/mediatek/xaga.dtbo
 vendor/mediatek/plato.dtbo
+vendor/mediatek/pearl.dtbo
 Image.gz
 "
 
@@ -22,6 +23,7 @@ arch/arm64/boot/Image.gz
 arch/arm64/boot/dts/vendor/mediatek/mt6895.dtb
 arch/arm64/boot/dts/vendor/mediatek/xaga.dtbo
 arch/arm64/boot/dts/vendor/mediatek/plato.dtbo
+arch/arm64/boot/dts/vendor/mediatek/pearl.dtbo
 vmlinux
 System.map
 "

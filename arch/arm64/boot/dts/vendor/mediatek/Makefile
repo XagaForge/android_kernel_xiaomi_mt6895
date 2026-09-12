@@ -12,3 +12,6 @@ xaga.dtbo-base := mt6895.dtb
 
 dtbo-$(CONFIG_TARGET_PRODUCT_PLATO) += plato.dtbo
 plato.dtbo-base := mt6895.dtb
+
+dtbo-$(CONFIG_TARGET_PRODUCT_PEARL) += pearl.dtbo
+pearl.dtbo-base := mt6895.dtb
