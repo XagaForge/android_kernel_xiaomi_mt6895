@@ -835,10 +835,10 @@ int kbase_ipa_control_query(struct kbase_device *kbdev, const void *client,
 	}
 
 	if (now)
-		*now = ktime_get_raw();
+		*now = ktime_get();
 
 	if (protected_time) {
-		u64 time_now = now ? ktime_to_ns(*now) : ktime_get_raw_ns();
+		u64 time_now = now ? ktime_to_ns(*now) : ktime_get_ns();
 
 		/* This is the amount of protected-mode time spent prior to
 		 * the current protm period.
