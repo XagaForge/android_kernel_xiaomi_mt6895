@@ -69,7 +69,7 @@
 #include "pmic_voter.h"
 
 #include "../../../misc/mediatek/typec/tcpc/inc/tcpci.h"
-#if defined(CONFIG_TARGET_PRODUCT_XAGA)
+#if defined(CONFIG_TARGET_PRODUCT_XAGA) || defined(CONFIG_TARGET_PRODUCT_PEARL)
 #include "../../../misc/hwid/hwid.h"
 #endif
 

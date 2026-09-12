@@ -33,7 +33,7 @@
 #include <linux/of_gpio.h>
 #include "bq28z610.h"
 #include "mtk_battery.h"
-#ifdef CONFIG_TARGET_PRODUCT_XAGA
+#if defined(CONFIG_TARGET_PRODUCT_XAGA) || defined(CONFIG_TARGET_PRODUCT_PEARL)
 #include "../../../misc/hwid/hwid.h"
 #endif
 
@@ -42,6 +42,7 @@ enum product_name {
 	XAGA,
 	XAGAPRO,
 	DAUMIER,
+	PEARL,
 };
 
 static int log_level = 1;
@@ -1908,7 +1909,7 @@ static int fg_get_property(struct power_supply *psy, enum power_supply_property 
 				} else
 					power_supply_get_property(bq->batt_psy, POWER_SUPPLY_PROP_STATUS, &pval);
 				if (pval.intval != POWER_SUPPLY_STATUS_CHARGING) {
-					if ((product_name != XAGA) && (product_name != XAGAPRO) && (product_name != DAUMIER)){
+					if ((product_name != XAGA) && (product_name != XAGAPRO) && (product_name != DAUMIER) && (product_name != PEARL)){
 						bq->cool_critical_shutdown_vbat = bq->critical_shutdown_vbat;
 						bq->old_critical_shutdown_vbat = bq->critical_shutdown_vbat;
 					}
@@ -2430,6 +2431,12 @@ static int fg_probe(struct i2c_client *client, const struct i2c_device_id *id)
 #if defined(CONFIG_TARGET_PRODUCT_DAUMIER)
 	product_name=DAUMIER;
 #endif
+
+#if defined(CONFIG_TARGET_PRODUCT_PEARL)
+        product_name=PEARL;
+#endif
+
+
 
 #if defined(CONFIG_TARGET_PRODUCT_XAGA)
 	const char *sku = get_hw_sku();
