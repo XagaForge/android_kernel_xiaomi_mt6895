@@ -1862,6 +1862,9 @@ static void bbr_main(struct sock *sk, const struct rate_sample *rs)
 	bool update_model = true;
 	u32 bw, round_delivered;
 
+	if (unlikely(!bbr->initialized))  /* we can be called before CC init */
+		return;
+
 	round_delivered = bbr_update_round_start(sk, rs, &ctx);
 	if (bbr->round_start)
 		bbr->rounds_since_probe =
