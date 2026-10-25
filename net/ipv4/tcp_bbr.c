@@ -148,7 +148,8 @@ struct bbr {
 		extra_acked_win_idx:1,	/* current index in extra_acked array */
 		full_bw_now:1,		/* recently reached full bw plateau? */
 		loss_yet_in_recovery:1, /* loss yet in CA_Loss/CA_Recovery? */
-		unused_3:4;
+		drain_rounds:3,		/* rounds spent in DRAIN */
+		unused_3:1;
 	u32	loss_round_delivered; /* scb->tx.delivered ending loss round */
 	u32	undo_bw_lo;	     /* bw_lo before latest losses */
 	u32	undo_inflight_lo;    /* inflight_lo before latest losses */
@@ -213,10 +214,10 @@ static const int bbr_pacing_margin_percent = 1;
 static const int bbr_startup_pacing_gain = BBR_UNIT * 277 / 100 + 1;
 /* The gain for deriving startup cwnd: */
 static const int bbr_startup_cwnd_gain = BBR_UNIT * 2;
-/* The pacing gain in BBR_DRAIN is calculated to typically drain
- * the queue created in BBR_STARTUP in a single round:
+/* The pacing gain of 1/bbr_startup_cwnd_gain in BBR_DRAIN is calculated
+ * to typically drain the queue created in BBR_STARTUP in a single round:
  */
-static const int bbr_drain_gain = BBR_UNIT * 1000 / 2885;
+static const int bbr_drain_gain = BBR_UNIT * 1 / 2;
 /* The gain for deriving steady-state cwnd tolerates delayed/stretched ACKs: */
 static const int bbr_cwnd_gain  = BBR_UNIT * 2;
 /* The pacing_gain values for the PROBE_BW gain cycle, to discover/share bw: */
@@ -244,6 +245,9 @@ static const u32 bbr_cwnd_min_target = 4;
 static const u32 bbr_full_bw_thresh = BBR_UNIT * 5 / 4;
 /* But after 3 rounds w/o significant bw growth, estimate pipe is full: */
 static const u32 bbr_full_bw_cnt = 3;
+
+/* Maximum number of packet-timed round trips spent in DRAIN mode. */
+static const u32 bbr_max_drain_rounds = 3;
 
 /* Gain factor for adding extra_acked to target cwnd: */
 static const int bbr_extra_acked_gain = BBR_UNIT;
@@ -275,11 +279,9 @@ static const u32 bbr_full_loss_cnt = 6;
 static const u32 bbr_inflight_headroom = BBR_UNIT * 15 / 100;
 
 /* How much do we increase cwnd_gain when probing for bandwidth in
- * BBR_BW_PROBE_UP? This specifies the increment in units of
- * BBR_UNIT/4. The default is 1, meaning 0.25.
- * The min value is 0 (meaning 0.0); max is 3 (meaning 0.75).
+ * BBR_BW_PROBE_UP, in units of BBR_UNIT?
  */
-static const u32 bbr_bw_probe_cwnd_gain = 1;
+static const u32 bbr_bw_probe_cwnd_gain = BBR_UNIT / 4;
 
 /* Max number of packet-timed rounds to wait before probing for bandwidth.  If
  * we want to tolerate 1% random loss per round, and not have this cut our
@@ -890,16 +892,17 @@ static void bbr_update_gains(struct sock *sk)
 		bbr->cwnd_gain	 = bbr_param(sk, startup_cwnd_gain);
 		break;
 	case BBR_DRAIN:
-		bbr->pacing_gain = bbr_param(sk, drain_gain);  /* slow, to drain */
-		bbr->cwnd_gain	 = bbr_param(sk, startup_cwnd_gain);  /* keep cwnd */
+		/* Reduce pacing_gain to smoothly drain bottleneck queue: */
+		bbr->pacing_gain = bbr_param(sk, drain_gain);
+		/* Maintain cwnd so that pacing rate is the limiting factor: */
+		bbr->cwnd_gain   = bbr_param(sk, startup_cwnd_gain);
 		break;
 	case BBR_PROBE_BW:
 		bbr->pacing_gain = bbr_pacing_gain[bbr->cycle_idx];
 		bbr->cwnd_gain	 = bbr_param(sk, cwnd_gain);
-		if (bbr_param_enabled(sk, bw_probe_cwnd_gain) &&
-		    bbr->cycle_idx == BBR_BW_PROBE_UP)
-			bbr->cwnd_gain +=
-				BBR_UNIT * bbr_param(sk, bw_probe_cwnd_gain) / 4;
+		if (bbr->cycle_idx == BBR_BW_PROBE_UP)
+			bbr->cwnd_gain =
+			  min(0x3FF, bbr->cwnd_gain + bbr_bw_probe_cwnd_gain);
 		break;
 	case BBR_PROBE_RTT:
 		bbr->pacing_gain = BBR_UNIT;
@@ -1760,25 +1763,32 @@ static void bbr_check_full_bw_reached(struct sock *sk,
 
 /* If pipe is probably full, drain the queue and then enter steady-state. */
 static void bbr_check_drain(struct sock *sk, const struct rate_sample *rs,
-			    struct bbr_context *ctx)
+			     struct bbr_context *ctx)
 {
 	struct bbr *bbr = inet_csk_ca(sk);
 
 	if (bbr->mode == BBR_STARTUP && bbr_full_bw_reached(sk)) {
 		bbr->mode = BBR_DRAIN;	/* drain queue we created */
+		bbr->drain_rounds = 0;
 		/* Set ssthresh to export purely for monitoring, to signal
 		 * completion of initial STARTUP by setting to a non-
 		 * TCP_INFINITE_SSTHRESH value (ssthresh is not used by BBR).
 		 */
-		tcp_sk(sk)->snd_ssthresh =
-				bbr_inflight(sk, bbr_max_bw(sk), BBR_UNIT);
+		WRITE_ONCE(tcp_sk(sk)->snd_ssthresh,
+			   bbr_inflight(sk, bbr_max_bw(sk), BBR_UNIT));
 		bbr_reset_congestion_signals(sk);
 	}	/* fall through to check if in-flight is already small: */
-	if (bbr->mode == BBR_DRAIN &&
-	    bbr_packets_in_net_at_edt(sk, tcp_packets_in_flight(tcp_sk(sk))) <=
-	    bbr_inflight(sk, bbr_max_bw(sk), BBR_UNIT)) {
-		bbr->mode = BBR_PROBE_BW;
-		bbr_start_bw_probe_down(sk);
+	if (bbr->mode == BBR_DRAIN) {
+		if (bbr->round_start)
+			bbr->drain_rounds++;
+		if (bbr_packets_in_net_at_edt(sk,
+			tcp_packets_in_flight(tcp_sk(sk))) <=
+		    bbr_inflight(sk, bbr_max_bw(sk), BBR_UNIT) ||
+		    unlikely(bbr->drain_rounds >
+			     bbr_param(sk, max_drain_rounds))) {
+			bbr->mode = BBR_PROBE_BW;
+			bbr_start_bw_probe_down(sk);
+		}
 	}
 }
 
@@ -1887,7 +1897,7 @@ static void bbr_init(struct sock *sk)
 
 	bbr->init_cwnd = min(0x7FU, tcp_snd_cwnd(tp));
 	bbr->prior_cwnd = tp->prior_cwnd;
-	tp->snd_ssthresh = TCP_INFINITE_SSTHRESH;
+	WRITE_ONCE(tp->snd_ssthresh, TCP_INFINITE_SSTHRESH);
 	bbr->next_rtt_delivered = tp->delivered;
 	bbr->prev_ca_state = TCP_CA_Open;
 
@@ -1906,6 +1916,7 @@ static void bbr_init(struct sock *sk)
 	bbr->full_bw_reached = 0;
 	bbr->full_bw = 0;
 	bbr->full_bw_cnt = 0;
+	bbr->drain_rounds = 0;
 	bbr->cycle_mstamp = 0;
 	bbr->cycle_idx = 0;
 
